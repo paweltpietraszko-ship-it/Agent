@@ -45,7 +45,7 @@ Nie polegamy na Twojej pamięci — reguły, których złamanie byłoby incydent
 - **Zakres:** tylko `TASK_SCOPE`. Potrzeba pliku spoza listy albo znalezisko „przy okazji" = zgłoś w
   `BOARD.md`/`ODLOZONE.md`, nie rób sam. Zgłoszenie błędu to nie jest wykonanie poprawki.
 - **Dostawa:** małe commity → `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`
-  → cytujesz wynik DOSŁOWNIE w BOARD.md (nigdy parafrazy) → status `READY_FOR_ARCHITECT`. FAIL naprawiasz;
+  (before_sha = `tasks/<id>/repo_before.hash`, head_sha = `git rev-parse HEAD`) → cytujesz wynik DOSŁOWNIE w BOARD.md (nigdy parafrazy) → status `READY_FOR_ARCHITECT`. FAIL naprawiasz;
   `WYMAGA_DECYZJI` należy do Ownera/architekta. Podaj adresata i czy branch jest wypchnięty (SHA).
 - **Git:** przed twierdzeniem „zaimplementowane/brak" zrób `git fetch` i patrz na `origin/main`. Branche `task/*`
   wypychasz sam; do `main` wchodzisz wyłącznie po „zmerguj" Ownera i **od razu usuwasz** branch (zdalny i lokalny).
