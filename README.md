@@ -1,27 +1,32 @@
-# Agent — Vertical V0-A
+# Agent — customer-controlled AI workflow automation
 
-**Status:** dokumentacja i kontrakt pierwszego verticalu; brak zaimplementowanego produktu. To nowe repo nie jest kontynuacją Elnath Code.
+**Cel produktu i portfolio:** zbudować działający, konfigurowalny demonstrator procesów biznesowych, który właściciel pokaże na Upwork jako dowód umiejętności projektowania, wdrażania i dostosowywania automatyzacji z AI. Nawet kilka płatnych zleceń byłoby osobistym sukcesem, ale ich zdobycie nie jest technicznym kryterium PASS.
 
-## Zacznij tutaj (Claude Code)
+**Najpierw przeczytaj [PRODUCT_GOAL_AND_ROADMAP.md](docs/PRODUCT_GOAL_AND_ROADMAP.md).** Następnie [CLAUDE.md](CLAUDE.md), [spec V0-A](docs/VERTICAL_V0A_FROZEN_SPEC.md) i [aktywne zadanie V0A-01](tasks/TASK_V0A_01_CORE_RECOVERY.md). `V0A-01` pozostaje pierwszym, ograniczonym taskiem technicznym, a nie definicją całego produktu.
 
-1. Przeczytaj [CLAUDE.md](CLAUDE.md), następnie [zamrożony spec V0-A](docs/VERTICAL_V0A_FROZEN_SPEC.md) i [aktywne zadanie V0A-01](tasks/TASK_V0A_01_CORE_RECOVERY.md).
-2. Wykonuj **wyłącznie V0A-01**. Pierwszy etap: Python + FastAPI + PostgreSQL + SQLAlchemy/Alembic + DBOS + deterministyczny fake connector + 10 acceptance tests. Bez LLM, researchu, Gmaila, UI i pamięci EME.
-3. Gdy pojawia się konflikt pomiędzy dokumentami, obowiązuje kolejność z `CLAUDE.md`. Nie dopowiadaj decyzji produktowych na podstawie historycznych materiałów.
-4. Wynik implementacji: działający kod, testy i krótki `V0A01_REPORT.md` z komendami, wynikami, ograniczeniami i ewentualnym FAIL. Nie zmieniaj kontraktu, żeby uzyskać PASS.
+## Zasada produktu
 
-## Mapa dokumentów
+Klient kupuje **użyteczny proces biznesowy**, nie sam runtime. Agent ma działać w dwóch materialnie różnych konfiguracjach klientów bez przepisywania wspólnego CORE; Ridgeway jest tylko syntetycznym przykładem. Angielski jest językiem podstawowym produktu, a polski opcjonalnym drugim językiem interfejsu.
+
+Chcemy pokazywać **kontrolę firmy nad przepływem danych i uprawnieniami**, nie składać nieudowadnialnej obietnicy „AI nigdy nie wykrada sekretów”. Model zewnętrzny może otrzymać wyłącznie dozwolony, minimalny pakiet zadaniowy; zakres transmisji musi dać się obejrzeć i przetestować. Przesłanie danych dostawcy modelu nie oznacza automatycznie publikacji w internecie, ale jest odrębnym przepływem danych i wymaga świadomej zgody/polityki klienta.
+
+## Dla Claude Code — aktualna praca
+
+1. Przeczytaj `docs/PRODUCT_GOAL_AND_ROADMAP.md` **tylko w zakresie celu, poufności i przyszłych kamieni milowych**. Nie implementuj całej mapy drogowej.
+2. Przeczytaj `CLAUDE.md`, `docs/VERTICAL_V0A_FROZEN_SPEC.md` i `tasks/TASK_V0A_01_CORE_RECOVERY.md`.
+3. Wykonaj **wyłącznie V0A-01**: FastAPI + PostgreSQL + SQLAlchemy/Alembic + DBOS + deterministyczny fake connector + 10 testów. Bez LLM, CRM, Gmaila, researchu, UI i pamięci EME.
+4. Dostarcz uruchamialny kod, testy i `V0A01_REPORT.md`. Bez zgody na przejście do kolejnego zadania samodzielnie.
+
+## Dokumenty
 
 | Plik | Rola |
 | --- | --- |
-| `CLAUDE.md` | Zasady pierwszeństwa i ograniczenia implementera |
-| `docs/VERTICAL_V0A_FROZEN_SPEC.md` | Obowiązujący kontrakt całego verticalu |
-| `tasks/TASK_V0A_01_CORE_RECOVERY.md` | **Jedyne aktywne zadanie do napisania teraz** |
-| `docs/reference/ARCHITECT_LEDGER_v17.yaml` | Historia rozumowania i odrzuconych alternatyw; **nie jest bieżącą listą zadań** |
-| `docs/reference/PRODUCT_CANONICAL_2026-09-16.md` | Historyczny szerszy kontekst produktu; nie nadpisuje decyzji V0-A |
-| `docs/reference/RIDGEWAY_CANONICAL_2026-09-16.md` | Historyczna specyfikacja fikcyjnego Customer 01; V0A-01 **nie implementuje Ridgeway/GHL** |
+| `docs/PRODUCT_GOAL_AND_ROADMAP.md` | **Aktualny cel produktu, granice obietnicy poufności i mapa drogowa do portfolio** |
+| `CLAUDE.md` | Kolejność dokumentów, zakres implementacji i sposób pracy |
+| `docs/VERTICAL_V0A_FROZEN_SPEC.md` | Kontrakt techniczny pierwszego verticalu |
+| `tasks/TASK_V0A_01_CORE_RECOVERY.md` | **Jedyne bieżące zadanie implementacyjne** |
+| `docs/reference/ARCHITECT_LEDGER_v17.yaml` | Historia badań i decyzji, **nie backlog** |
+| `docs/reference/PRODUCT_CANONICAL_2026-09-16.md` | Starszy kontekst produktu, nie aktualna mapa drogowa |
+| `docs/reference/RIDGEWAY_CANONICAL_2026-09-16.md` | Starsza specyfikacja fikcyjnego klienta, nie uniwersalny schemat Agenta |
 
-Dokumenty w `docs/reference/` zachowano bez zmian jako źródła. Nie czytaj ich wszystkich domyślnie i nie włączaj do kontekstu całej historii. Jeśli aktywne zadanie wymaga konkretnego dawnego ustalenia, przeczytaj tylko potrzebny fragment i zachowaj aktualną precedencję.
-
-## Jednoznaczny zakres
-
-V0-A w przyszłości obejmie `Research & Follow-up`; V0A-01 ma sfalsyfikować *wyłącznie* trwałość sześciostanowego cyklu akcji z fake connector. Dołożenie modelu, drugiego agenta, pełnej EME czy GHL w tym tasku jest naruszeniem kontraktu.
+Nie czytaj całych historycznych dokumentów domyślnie ani nie podnoś wcześniejszych deklaracji „CURRENT” ponad nowe decyzje. Aktualną precedencję opisuje `CLAUDE.md`.
