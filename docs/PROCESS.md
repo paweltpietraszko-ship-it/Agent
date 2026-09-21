@@ -25,7 +25,7 @@ projekt, sens testu, jakość sformułowań. Tło: [DETERMINISM_PATTERNS.md](DET
 2. CC robi krótką recenzję merytoryczną briefu (sens, zakres, luki). Niejasne = pyta, nie zgaduje.
 3. CC: `git config core.hooksPath .githooks` (raz na klon), `git switch -c task/<id>`,
    `python harness/task_init.py <id>`. Implementuje tylko `TASK_SCOPE`, małymi commitami.
-4. **Bramka** odpala się **sama na GitHubie** po każdym pushu na `task/*` (`.github/workflows/gate.yml`) —
+4. **Bramka** odpala się **sama na GitHubie** po każdym pushu na dowolny branch poza `main` (wyjątków po nazwie brancha nie ma — inaczej nazwa wyłączałaby bramkę) (`.github/workflows/gate.yml`) —
    nie zależy od tego, czy CC pamięta ją uruchomić. Brief musi leżeć w `tasks/<id>.md` albo
    `tasks/<id>/brief.md`, a SHA bazowy w `tasks/<id>/repo_before.hash` (robi to `task_init.py`).
    Lokalnie ten sam skrypt: `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`.

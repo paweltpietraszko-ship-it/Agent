@@ -3,7 +3,7 @@
 name: gate
 on:
   push:
-    branches: ["task/**", "!task/HARNESS-**"]  # prace nad samym harnessem nie maja briefu; audytuje je Codex
+    branches-ignore: ["main"]  # kazdy inny branch jest bramkowany; wyjatku po nazwie brancha nie ma
 permissions:
   contents: read
 jobs:
