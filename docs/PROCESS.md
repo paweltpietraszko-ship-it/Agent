@@ -25,9 +25,18 @@ projekt, sens testu, jakość sformułowań. Tło: [DETERMINISM_PATTERNS.md](DET
 2. CC robi krótką recenzję merytoryczną briefu (sens, zakres, luki). Niejasne = pyta, nie zgaduje.
 3. CC: `git config core.hooksPath .githooks` (raz na klon), `git switch -c task/<id>`,
    `python harness/task_init.py <id>`. Implementuje tylko `TASK_SCOPE`, małymi commitami.
-4. **Bramka:** `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`.
-   Wynik cytowany dosłownie w BOARD.md. FAIL = poprawka i ponowne uruchomienie.
-   WYMAGA_DECYZJI = decyzja Ownera/architekta, nie CC.
+4. **Bramka** odpala się **sama na GitHubie** po każdym pushu na `task/*` (`.github/workflows/gate.yml`) —
+   nie zależy od tego, czy CC pamięta ją uruchomić. Brief musi leżeć w `tasks/<id>.md` albo
+   `tasks/<id>/brief.md`, a SHA bazowy w `tasks/<id>/repo_before.hash` (robi to `task_init.py`).
+   Lokalnie ten sam skrypt: `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`.
+   Wynik cytowany dosłownie w BOARD.md. FAIL (czerwony) = poprawka. WYMAGA_DECYZJI (żółte ostrzeżenie,
+   Action nie blokuje) = decyzja Ownera/architekta, nie CC.
+   Twarde reguły (FAIL): zakres, zamrożone pliki, ochrona `harness/` `.github/` `.githooks/`, składnia, ruff,
+   twarde limity rozmiaru. Miękkie (WYMAGA_DECYZJI): próg rozmiaru, RATIO/TOTAL_LINES, poziom audytu.
+   Rozmiar: kod 600 linii (twardo 900), testy 1200 (twardo 1800), funkcja 50 (twardo 80). Powyżej progu
+   miękkiego CC pisze do BOARD.md jedno zdanie po co, a Owner akceptuje albo prosi o podział. Zasada nadal:
+   nowa logika w nowym pliku — CC ma skłonność wpychać wszystko do jednego pliku, którego zależności potem
+   sam nie widzi, a audytor też się w nim gubi.
 5. **ARCHITECT_REVIEW** (sekcja 4) → BOARD.md.
 6. Gdy **jednostka audytu** jest kompletna → audyt Codexa wg `AUDIT_TIER` (sekcja 5).
 7. Owner mówi „zmerguj" → CC merguje do `main`, wypycha, **od razu usuwa branch** (zdalny i lokalny).
@@ -96,6 +105,7 @@ Zawsze `git pull` przed edycją: architekt i Codex piszą tu równolegle. Rzeczy
 | Plik | Rola |
 |---|---|
 | `harness/backend.py` | bramka mechaniczna (PASS/FAIL/WYMAGA_DECYZJI), mierzy dostarczony commit |
+| `.github/workflows/gate.yml` | uruchamia bramkę automatycznie po pushu na `task/*` |
 | `harness/guard.py` | blokada zamrożonych plików `harness/FROZEN.lock` |
 | `harness/task_init.py` | start Tasku + zapis SHA bazowego + kontrola hooka |
 | `harness/critical_paths.txt` | ścieżki wymuszające CRITICAL |
@@ -104,5 +114,13 @@ Zawsze `git pull` przed edycją: architekt i Codex piszą tu równolegle. Rzeczy
 | `harness/tests/` | testy samego harnessu: `python -m pytest harness/tests` |
 | `AGENTS.md`, `ARCHITECT_START_HERE.md`, `CLAUDE.md` | zasady per rola |
 
-`harness/` i `.githooks/` są chronione: bramka odrzuca Task, którego zakres ich dotyka. Zmienia je
+`harness/`, `.githooks/` i `.github/` są chronione: bramka odrzuca Task, którego zakres ich dotyka. Zmienia je
 wyłącznie Owner/architekt, świadomym commitem.
+
+## 8. Ochrona `main` (jednorazowo, robi Owner w ustawieniach repo)
+
+Bez tego bramka jest tylko widoczna, nie wiążąca. Na publicznym repo jest to darmowe: Settings → Rules →
+New branch ruleset → cel `main` → „Require status checks to pass" (`gate`) + „Block force pushes".
+Uwaga: ruleset nie zna wyjątku „tylko BOARD.md", a dziś BOARD.md/ODLOZONE.md idą prosto na `main`. Do
+rozstrzygnięcia z Ownerem: albo Owner ma bypass i tylko on pisze na `main`, albo BOARD.md też idzie
+przez branch. Do czasu tej decyzji ruleset nie jest włączany.

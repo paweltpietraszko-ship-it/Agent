@@ -19,7 +19,7 @@ import sys
 from pathlib import Path, PurePosixPath
 
 LOCK_PATH = "harness/FROZEN.lock"
-PROTECTED_PREFIXES = ("harness/", ".githooks/", ".git/")
+PROTECTED_PREFIXES = ("harness/", ".githooks/", ".github/", ".git/")
 LOCK_HEADER = "# FROZEN.lock -- managed by harness/guard.py; change only via `guard freeze --recompute`\n"
 LINE = re.compile(r"^([0-9a-f]{64})  (\S.*)$")
 

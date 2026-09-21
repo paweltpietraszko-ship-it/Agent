@@ -24,7 +24,8 @@ CHECKS:
   FROZEN_LOCK               every file in harness/FROZEN.lock matches its hash at head_sha
   DIFF_SCOPE / NEW_FILES    every changed file is in scope; at most MAX_NEW_FILES new files
   SYNTAX / RUFF             changed .py files parse and pass harness/ruff.toml
-  SIZE_FILE / SIZE_FUNC     max 600 lines per file, 50 lines per function
+  SIZE_FILE / SIZE_FUNC     soft limit (WYMAGA_DECYZJI, owner accepts or asks to split) and hard limit
+                            (FAIL): code 600/900 lines per file, 50/80 per function; tests 1200/1800, 50/80
   RATIO / TOTAL_LINES       insertions:deletions > 5:1, or > threshold lines => WYMAGA_DECYZJI
   AUDIT_TIER                changed files matching harness/critical_paths.txt but brief tier
                             below CRITICAL => WYMAGA_DECYZJI
@@ -47,8 +48,9 @@ from pathlib import Path, PurePosixPath
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guard  # noqa: E402
 
-MAX_FILE_LINES = 600
-MAX_FUNC_LINES = 50
+SOFT_FILE_LINES, HARD_FILE_LINES = 600, 900
+SOFT_TEST_FILE_LINES, HARD_TEST_FILE_LINES = 1200, 1800
+SOFT_FUNC_LINES, HARD_FUNC_LINES = 50, 80
 DEFAULT_MAX_NEW_FILES = 2
 DEFAULT_TOTAL_LINES = 150
 RATIO_THRESHOLD = 5
@@ -149,7 +151,7 @@ def check_scope_entries(scope: list[str]) -> list[str]:
             errors.append(f"SCOPE_ENTRY: only * and ** wildcards are supported: {entry}")
         elif "*" in first:
             errors.append(f"SCOPE_ENTRY: first path segment must be literal (no repo-wide wildcard): {entry}")
-        elif entry.startswith(PROTECTED_PREFIXES) or first in (".git", "harness", ".githooks"):
+        elif entry.startswith(PROTECTED_PREFIXES) or first in (".git", "harness", ".githooks", ".github"):
             errors.append(f"SCOPE_ENTRY: protected path cannot be in a Task scope: {entry}")
     return errors
 
@@ -273,42 +275,55 @@ def ruff_command() -> list[str]:
     return ["ruff"] if shutil.which("ruff") else [sys.executable, "-m", "ruff"]
 
 
-def check_python_file(path: str, content: bytes, ruff: list[str]) -> list[str]:
-    errors = []
+def is_test_path(path: str) -> bool:
+    return path.startswith("tests/") or path.rsplit("/", 1)[-1].startswith("test_")
+
+
+def size_verdict(label: str, what: str, size: int, soft: int, hard: int, errors: list[str], soft_hits: list[str]) -> None:
+    if size > hard:
+        errors.append(f"{label}: {what} has {size} lines (hard max {hard})")
+    elif size > soft:
+        soft_hits.append(f"{label}: {what} has {size} lines (soft limit {soft}) - owner accepts or asks to split")
+
+
+def check_python_file(path: str, content: bytes, ruff: list[str]) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    soft_hits: list[str] = []
     text = content.decode("utf-8", errors="replace")
-    lines = len(text.splitlines())
-    if lines > MAX_FILE_LINES:
-        errors.append(f"SIZE_FILE: {path} has {lines} lines (max {MAX_FILE_LINES})")
+    soft, hard = (SOFT_TEST_FILE_LINES, HARD_TEST_FILE_LINES) if is_test_path(path) else (SOFT_FILE_LINES, HARD_FILE_LINES)
+    size_verdict("SIZE_FILE", path, len(text.splitlines()), soft, hard, errors, soft_hits)
     try:
         tree = ast.parse(text)
     except SyntaxError as exc:
-        return errors + [f"SYNTAX: {path}: {exc.msg} (line {exc.lineno})"]
+        return errors + [f"SYNTAX: {path}: {exc.msg} (line {exc.lineno})"], soft_hits
     length, name = max_func_lines(tree)
-    if length > MAX_FUNC_LINES:
-        errors.append(f"SIZE_FUNC: {path}:{name} has {length} lines (max {MAX_FUNC_LINES})")
+    size_verdict("SIZE_FUNC", f"{path}:{name}", length, SOFT_FUNC_LINES, HARD_FUNC_LINES, errors, soft_hits)
     try:
         result = subprocess.run(
             [*ruff, "check", "--config", RUFF_CONFIG, "--stdin-filename", path, "-"],
             input=content, capture_output=True,
         )
     except OSError as exc:
-        return errors + [f"RUFF: unable to launch ruff: {exc}"]
+        return errors + [f"RUFF: unable to launch ruff: {exc}"], soft_hits
     if result.returncode != 0:
         output = (result.stdout + result.stderr).decode("utf-8", errors="replace").splitlines()
         errors += [f"RUFF: {line}" for line in output if line.strip()]
-    return errors
+    return errors, soft_hits
 
 
-def check_python(changed: dict[str, list[str]], brief: Brief, head: str) -> list[str]:
+def check_python(changed: dict[str, list[str]], brief: Brief, head: str) -> tuple[list[str], list[str]]:
     ruff = ruff_command()
-    errors = []
+    errors: list[str] = []
+    soft_hits: list[str] = []
     for path in changed["added"] + changed["modified"]:
         if is_artifact(path) or not path.endswith(".py") or not in_scope(path, brief.scope):
             continue
         content = git_show(head, path)
         if content is not None:
-            errors += check_python_file(path, content, ruff)
-    return errors
+            file_errors, file_soft = check_python_file(path, content, ruff)
+            errors += file_errors
+            soft_hits += file_soft
+    return errors, soft_hits
 
 
 def diff_stats(before: str, head: str, paths: list[str]) -> tuple[dict[str, int], str | None]:
@@ -412,11 +427,12 @@ def run_backend(brief_arg: Path, before_arg: str, head_arg: str, output_path: Pa
         blockers += check_frozen_lock(head)
         if not any(b.startswith(("TASK_SCOPE", "SCOPE_ENTRY")) for b in blockers):
             blockers += check_scope_and_files(changed, brief)
-            blockers += check_python(changed, brief, head)
+            py_errors, wymaga = check_python(changed, brief, head)
+            blockers += py_errors
             paths = [p for k in ("added", "modified", "deleted") for p in changed[k] if not is_artifact(p)]
             stats, stats_err = diff_stats(before, head, paths)
             blockers += [f"GIT_DIFF: {stats_err}"] if stats_err else []
-            wymaga = check_ratio(stats, brief.total_lines) + check_tier(changed, brief, head)
+            wymaga += check_ratio(stats, brief.total_lines) + check_tier(changed, brief, head)
 
     changed_py = [p for k in ("added", "modified") for p in changed[k] if p.endswith(".py") and not is_artifact(p)]
     excluded = [p for k in ("added", "modified", "deleted") for p in changed[k] if is_artifact(p)]

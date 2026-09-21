@@ -62,7 +62,7 @@ def test_missing_empty_or_duplicate_scope_fails(tmp_path, scope_text):
 
 @pytest.mark.parametrize("entry", [
     "/etc/passwd", "C:/x.py", "app\\x.py", "../x.py", "app/../x.py", "*.py", "**/x.py",
-    "harness/backend.py", ".githooks/pre-commit", "app/[a].py", "app/{a,b}.py",
+    "harness/backend.py", ".githooks/pre-commit", ".github/workflows/gate.yml", "app/[a].py", "app/{a,b}.py",
 ])
 def test_bad_scope_entries_fail(tmp_path, entry):
     repo, base = build_repo(tmp_path / "r", brief=f"TASK_SCOPE:\n- {entry}\n")
@@ -105,14 +105,37 @@ def test_insertion_deletion_ratio_needs_decision(repo_and_base):
     assert code == 2 and "RATIO:" in out
 
 
-def test_file_and_function_size_limits_fail(repo_and_base):
+def lines(count):
+    return "".join(f"v{i} = {i}\n" for i in range(count))
+
+
+def func(name, body_lines):
+    return f"def {name}():\n" + "    print(1)\n" * body_lines + "    return 1\n"
+
+
+def test_size_soft_limit_needs_decision_hard_limit_fails(repo_and_base):
     repo, base = repo_and_base
-    long_file = {"app/long.py": "".join(f"v{i} = {i}\n" for i in range(601))}
-    code, out = repo.backend(base, deliver(repo, long_file))
-    assert code == 1 and "SIZE_FILE: app/long.py has 601 lines" in out
-    long_func = {"app/fn.py": "def f():\n" + "".join(f"    v{i} = {i}\n" for i in range(50)) + "    return 1\n"}
-    code, out = repo.backend(repo.git("rev-parse", "HEAD"), deliver(repo, long_func))
-    assert code == 1 and "SIZE_FUNC: app/fn.py:f has 52 lines" in out
+    soft = {"app/long.py": lines(601)}
+    code, out = repo.backend(base, deliver(repo, soft))
+    assert code == 2 and "SIZE_FILE: app/long.py has 601 lines (soft limit 600)" in out
+    hard = {"app/huge.py": lines(901)}
+    code, out = repo.backend(repo.git("rev-parse", "HEAD"), deliver(repo, hard))
+    assert code == 1 and "SIZE_FILE: app/huge.py has 901 lines (hard max 900)" in out
+
+
+def test_tests_get_higher_file_limit(repo_and_base):
+    repo, base = repo_and_base
+    code, out = repo.backend(base, deliver(repo, {"tests/test_app.py": lines(1000)}))
+    assert "SIZE_FILE:" not in out, out
+    assert code == 2 and "TOTAL_LINES" in out
+
+
+def test_function_size_soft_and_hard(repo_and_base):
+    repo, base = repo_and_base
+    code, out = repo.backend(base, deliver(repo, {"app/fn.py": func("f", 50)}))
+    assert code == 2 and "SIZE_FUNC: app/fn.py:f has 52 lines (soft limit 50)" in out
+    code, out = repo.backend(repo.git("rev-parse", "HEAD"), deliver(repo, {"app/fn2.py": func("g", 80)}))
+    assert code == 1 and "SIZE_FUNC: app/fn2.py:g has 82 lines (hard max 80)" in out
 
 
 def test_ruff_and_syntax_errors_fail(repo_and_base):
