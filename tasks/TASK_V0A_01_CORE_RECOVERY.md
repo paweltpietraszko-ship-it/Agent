@@ -1,8 +1,31 @@
 # TASK V0A-01 — CORE DURABLE ACTION LIFECYCLE
 
-Status: READY FOR IMPLEMENTER
+Status: FROZEN FOR IMPLEMENTATION — 2026-09-21 (scope/process adaptation; technical acceptance unchanged)
+TASK_ID: TASK_V0A_01_CORE_RECOVERY
+BRANCH: task/TASK_V0A_01_CORE_RECOVERY
+AUDIT_TIER: CRITICAL
+MAX_NEW_FILES: 30
+TOTAL_LINES_THRESHOLD: 2500
+
 Parent: VERTICAL V0-A — FROZEN SPEC
 Purpose: falsify or validate DBOS + PostgreSQL as the durable runtime for the canonical pending-action lifecycle before any LLM/research code exists.
+
+## Mechanically enforced task scope
+
+TASK_SCOPE:
+- app/**
+- migrations/**
+- tests/**
+- alembic.ini
+- pyproject.toml
+- docker-compose.yml
+- V0A01_REPORT.md
+
+Read-only context: `docs/VERTICAL_V0A_FROZEN_SPEC.md`, `docs/PRODUCT_GOAL_AND_ROADMAP.md`, `CLAUDE.md`, `CC_START_HERE.md`, `docs/PROCESS.md`. Do not edit these, the task brief, or anything under `harness/`, `.github/`, `.githooks/`. The implementation is generic and fake-only; Ridgeway is NOT a source of new product requirements.
+
+Branch naming is intentional: the existing brief path is `tasks/TASK_V0A_01_CORE_RECOVERY.md`, so `task/TASK_V0A_01_CORE_RECOVERY` is the matching branch for the current GitHub gate. Initialize bookkeeping with `python harness/task_init.py TASK_V0A_01_CORE_RECOVERY`. Do not create a duplicate brief just to shorten the branch name.
+
+If a necessary implementation file falls outside TASK_SCOPE: STOP the affected change; report the exact missing path, purpose and smallest proposed amendment via `BOARD.md`. Neither CC nor the harness may silently expand the frozen scope. The two numerical limits are capacity/decision tripwires for this new-code task, not a request to create 30 files or 2500 lines. Prefer less code.
 
 ## Role
 
