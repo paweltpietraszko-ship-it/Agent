@@ -25,7 +25,9 @@ LINE = re.compile(r"^([0-9a-f]{64})  (\S.*)$")
 
 
 def sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
+    """Hash with CRLF folded to LF: on Windows (core.autocrlf) the working-tree copy is CRLF while
+    the committed blob is LF; both must give the same hash or every check gives a false alarm."""
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
 
 
 def parse_lock_text(text: str) -> tuple[dict[str, str], str | None]:

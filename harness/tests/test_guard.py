@@ -67,3 +67,19 @@ def test_usage_errors_exit_nonzero(repo_and_base):
     assert repo.run("guard.py")[0] == 1
     assert repo.run("guard.py", "freeze")[0] == 1
     assert repo.run("guard.py", "check", "--all")[0] == 1
+
+
+def test_hash_ignores_crlf_so_windows_checkouts_do_not_false_alarm(tmp_path):
+    from conftest import build_repo
+
+    assert guard.sha256_bytes(b"a\r\nb\r\n") == guard.sha256_bytes(b"a\nb\n")
+    repo, _ = build_repo(tmp_path / "crlf")
+    repo.git("config", "core.autocrlf", "true")
+    (repo.root / "docs/SPEC.md").write_bytes(b"line one\r\nline two\r\n")  # CRLF in the working tree
+    assert repo.run("guard.py", "freeze", "--recompute", "docs/SPEC.md")[0] == 0
+    before = repo.commit("crlf spec")  # git stores the LF blob
+    assert repo.run("guard.py", "check")[0] == 0
+    (repo.root / "app/x.py").write_text("x = 1\n", encoding="utf-8", newline="\n")
+    head = repo.commit("work")
+    code, out = repo.backend(before, head)
+    assert out.startswith("STATUS: PASS"), out
