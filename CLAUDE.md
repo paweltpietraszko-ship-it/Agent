@@ -1,5 +1,7 @@
 # CLAUDE.md — implementer guidance for Agent
 
+**Na początku każdej sesji przeczytaj `CC_START_HERE.md` (pamięć i stan repo) — zanim cokolwiek zmienisz.**
+
 ## Najpierw cel produktu, potem bieżący task
 
 Przeczytaj `docs/PRODUCT_GOAL_AND_ROADMAP.md` dla **celu i granic produktu**. Agent ma być działającym, English-first, możliwym do konfigurowania demonstratorem AI workflow automation dla portfolio freelancera na Upwork. Nawet kilka płatnych zleceń byłoby osobistym sukcesem ownera; nie projektuj platformy na wyrost. Ridgeway to tylko referencyjny fikcyjny klient. Kontrola danych i uprawnień musi być demonstrowalna, nie opieraj marketingu na absolutnej obietnicy „AI never leaks secrets”.

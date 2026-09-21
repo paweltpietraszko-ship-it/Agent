@@ -120,6 +120,7 @@ Zawsze `git pull` przed edycją: architekt i Codex piszą tu równolegle. Rzeczy
 | `.githooks/pre-commit` | blokuje commit na `main`/`master` poza BOARD.md i ODLOZONE.md |
 | `harness/tests/` | testy samego harnessu: `python -m pytest harness/tests` |
 | `AGENTS.md`, `ARCHITECT_START_HERE.md`, `CLAUDE.md` | zasady per rola |
+| `CC_START_HERE.md`, `CODEX_START_HERE.md` | pamięć i stan repo dla gospodarza (CC) i audytora (Codex); każdy utrzymuje swój |
 
 `harness/`, `.githooks/` i `.github/` są chronione: bramka odrzuca Task, którego zakres ich dotyka. Zmienia je
 wyłącznie Owner/architekt, świadomym commitem.
