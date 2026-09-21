@@ -1,5 +1,7 @@
 # CLAUDE.md — implementer guidance for Agent
 
+**Na początku każdej sesji przeczytaj `CC_START_HERE.md` (pamięć i stan repo) — zanim cokolwiek zmienisz.**
+
 ## Najpierw cel produktu, potem bieżący task
 
 Przeczytaj `docs/PRODUCT_GOAL_AND_ROADMAP.md` dla **celu i granic produktu**. Agent ma być działającym, English-first, możliwym do konfigurowania demonstratorem AI workflow automation dla portfolio freelancera na Upwork. Nawet kilka płatnych zleceń byłoby osobistym sukcesem ownera; nie projektuj platformy na wyrost. Ridgeway to tylko referencyjny fikcyjny klient. Kontrola danych i uprawnień musi być demonstrowalna, nie opieraj marketingu na absolutnej obietnicy „AI never leaks secrets”.
@@ -35,3 +37,29 @@ Przykład historycznej kolizji: Ridgeway wskazywał LangGraph; V0A-01 ma przetes
 ## Zakończenie V0A-01
 
 Dostarcz `V0A01_REPORT.md`: komendy uruchomienia, wyniki T01–T10, faktyczne restart/crash/race testy, ograniczenia i odchylenia; PASS/FAIL dla dopasowania DBOS do zamrożonego lifecycle. **Nie rozpoczynaj automatycznie kolejnego etapu**, nawet po PASS. Produkt staje się portfolio-ready dopiero według osobnych kryteriów w roadmapie, nie po przejściu tych 10 testów.
+
+## Proces i harness (obowiązuje zawsze; szczegóły: `docs/PROCESS.md`)
+
+Nie polegamy na Twojej pamięci — reguły, których złamanie byłoby incydentem, sprawdza skrypt. Nie omijaj ich.
+
+- **Rola:** implementer i merytoryczny recenzent briefu. Nie jesteś architektem ani audytorem; nigdy nie
+  zatwierdzasz własnej implementacji (PASS/FAIL kodu należy do niezależnego audytora).
+- **Przed kodem:** przeczytaj brief. Brak `TASK_SCOPE` / `AUDIT_TIER`, niejasność albo pomysł, który uważasz za
+  źle pomyślany = STOP, pytanie do Ownera przez `BOARD.md`. Nie zgaduj, nie implementuj „jak popadnie".
+- **Start (raz na klon):** `git config core.hooksPath .githooks`. Na Task: `git switch -c task/<id>`,
+  `python harness/task_init.py <id>`. Hook blokuje commit na `main` poza BOARD.md/ODLOZONE.md; przed commitem
+  i tak sprawdź `git branch --show-current`.
+- **Zakres:** tylko `TASK_SCOPE`. Potrzeba pliku spoza listy albo znalezisko „przy okazji" = zgłoś w
+  `BOARD.md`/`ODLOZONE.md`, nie rób sam. Zgłoszenie błędu to nie jest wykonanie poprawki.
+- **Dostawa:** małe commity → `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`
+  (before_sha = `git merge-base origin/main HEAD`, head_sha = `git rev-parse HEAD`; bramka odpala się też sama na GitHubie) → cytujesz wynik DOSŁOWNIE w BOARD.md (nigdy parafrazy) → status `READY_FOR_ARCHITECT`. FAIL naprawiasz;
+  `WYMAGA_DECYZJI` należy do Ownera/architekta. Podaj adresata i czy branch jest wypchnięty (SHA).
+- **Git:** przed twierdzeniem „zaimplementowane/brak" zrób `git fetch` i patrz na `origin/main`. Branche `task/*`
+  wypychasz sam; do `main` wchodzisz wyłącznie po „zmerguj" Ownera i **od razu usuwasz** branch (zdalny i lokalny).
+- **Owner nie czyta kodu:** pisz po polsku, prosto, per „ty". Zachowanie widoczne dla człowieka streść własnymi
+  słowami i poczekaj na „tak, zgadza się" przed kodowaniem lub przekazaniem dalej.
+- **Uczciwość dowodu:** raport = co uruchomiono i wynik; nie ogłaszaj niczego jako przetestowane, jeśli nie
+  uruchomiono; nazwij ograniczenia. Repro kopiuje CAŁĄ realną konfigurację (nie „łagodniejsze" wartości domyślne).
+- **Nie ruszaj** `harness/`, `.githooks/` ani zamrożonych plików z `harness/FROZEN.lock` — to własność
+  Ownera/architekta.
+- **Budżet:** wąskie testy tego, co zmieniłeś, nie pełna suita „na wszelki wypadek"; zbiorcze wywołania narzędzi.

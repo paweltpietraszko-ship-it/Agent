@@ -30,3 +30,11 @@ Chcemy pokazywać **kontrolę firmy nad przepływem danych i uprawnieniami**, ni
 | `docs/reference/RIDGEWAY_CANONICAL_2026-09-16.md` | Starsza specyfikacja fikcyjnego klienta, nie uniwersalny schemat Agenta |
 
 Nie czytaj całych historycznych dokumentów domyślnie ani nie podnoś wcześniejszych deklaracji „CURRENT” ponad nowe decyzje. Aktualną precedencję opisuje `CLAUDE.md`.
+
+## Proces i harness
+
+Jak modele dowożą tu działający program: role, przepływ Tasku, poziomy audytu i mechaniczna bramka — patrz
+[docs/PROCESS.md](docs/PROCESS.md). Reguły per rola: `CLAUDE.md` (implementer), [AGENTS.md](AGENTS.md) (audytor),
+[ARCHITECT_START_HERE.md](ARCHITECT_START_HERE.md) (architekt). Kolejka przekazań: [BOARD.md](BOARD.md),
+odłożone tematy: [ODLOZONE.md](ODLOZONE.md). Skrypty i szablon briefu: `harness/`; testy harnessu:
+`python -m pytest harness/tests`.

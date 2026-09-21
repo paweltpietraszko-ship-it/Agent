@@ -1,0 +1,7 @@
+# Fixed lint rules for the mechanical gate (backend.py runs ruff with THIS file, never the
+# product's own config, so a product pyproject cannot loosen the gate).
+line-length = 120
+
+[lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

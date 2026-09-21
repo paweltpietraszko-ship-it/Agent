@@ -1,0 +1,36 @@
+# Mechaniczna bramka: odpala sie sama po kazdym pushu na task/*, bez udzialu modelu.
+# Zmiany w .github/ i harness/ nie moga byc czescia Tasku (bramka je odrzuca) - zmienia je tylko Owner.
+name: gate
+on:
+  push:
+    branches-ignore: ["main"]  # kazdy inny branch jest bramkowany; wyjatku po nazwie brancha nie ma
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - name: Run backend.py
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          id="${BRANCH#task/}"
+          brief=""
+          for c in "tasks/${id}.md" "tasks/${id}/brief.md"; do [ -f "$c" ] && brief="$c" && break; done
+          [ -n "$brief" ] || { echo "::error::brak briefu: tasks/${id}.md ani tasks/${id}/brief.md"; exit 1; }
+          before=$(git merge-base origin/main HEAD)
+          [ -n "$before" ] || { echo "::error::brak wspolnej historii z origin/main"; exit 1; }
+          set +e
+          python harness/backend.py "$brief" "$before" "$(git rev-parse HEAD)" "backend_ci.txt" | tee out.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          { echo '```'; cat out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" = "2" ]; then echo "::warning::WYMAGA_DECYZJI - decyzja nalezy do Ownera, nie do CC"; exit 0; fi
+          exit "$code"
