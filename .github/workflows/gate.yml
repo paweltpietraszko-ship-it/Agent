@@ -3,7 +3,7 @@
 name: gate
 on:
   push:
-    branches: ["task/**"]
+    branches: ["task/**", "!task/HARNESS-**"]  # prace nad samym harnessem nie maja briefu; audytuje je Codex
 permissions:
   contents: read
 jobs:
