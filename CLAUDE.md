@@ -30,3 +30,29 @@ Spec V0-A i task V0A-01 są późniejszymi decyzjami: wybrany kandydat runtime t
 ## Koniec tasku
 
 Przedstaw `V0A01_REPORT.md` z komendami uruchomienia, wynikiem **T01–T10**, faktycznie sprawdzonymi restart/crash/race scenariuszami, znanymi ograniczeniami, odstępstwami i werdyktem PASS/FAIL dla fit DBOS. Niczego nie ogłaszaj jako przetestowane, jeśli nie zostało uruchomione. Nie przechodź do kolejnego tasku samoczynnie.
+
+## Proces i harness (obowiązuje zawsze; szczegóły: `docs/PROCESS.md`)
+
+Nie polegamy na Twojej pamięci — reguły, których złamanie byłoby incydentem, sprawdza skrypt. Nie omijaj ich.
+
+- **Rola:** implementer i merytoryczny recenzent briefu. Nie jesteś architektem ani audytorem; nigdy nie
+  zatwierdzasz własnej implementacji (PASS/FAIL kodu należy do niezależnego audytora).
+- **Przed kodem:** przeczytaj brief. Brak `TASK_SCOPE` / `AUDIT_TIER`, niejasność albo pomysł, który uważasz za
+  źle pomyślany = STOP, pytanie do Ownera przez `BOARD.md`. Nie zgaduj, nie implementuj „jak popadnie".
+- **Start (raz na klon):** `git config core.hooksPath .githooks`. Na Task: `git switch -c task/<id>`,
+  `python harness/task_init.py <id>`. Hook blokuje commit na `main` poza BOARD.md/ODLOZONE.md; przed commitem
+  i tak sprawdź `git branch --show-current`.
+- **Zakres:** tylko `TASK_SCOPE`. Potrzeba pliku spoza listy albo znalezisko „przy okazji" = zgłoś w
+  `BOARD.md`/`ODLOZONE.md`, nie rób sam. Zgłoszenie błędu to nie jest wykonanie poprawki.
+- **Dostawa:** małe commity → `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`
+  → cytujesz wynik DOSŁOWNIE w BOARD.md (nigdy parafrazy) → status `READY_FOR_ARCHITECT`. FAIL naprawiasz;
+  `WYMAGA_DECYZJI` należy do Ownera/architekta. Podaj adresata i czy branch jest wypchnięty (SHA).
+- **Git:** przed twierdzeniem „zaimplementowane/brak" zrób `git fetch` i patrz na `origin/main`. Branche `task/*`
+  wypychasz sam; do `main` wchodzisz wyłącznie po „zmerguj" Ownera i **od razu usuwasz** branch (zdalny i lokalny).
+- **Owner nie czyta kodu:** pisz po polsku, prosto, per „ty". Zachowanie widoczne dla człowieka streść własnymi
+  słowami i poczekaj na „tak, zgadza się" przed kodowaniem lub przekazaniem dalej.
+- **Uczciwość dowodu:** raport = co uruchomiono i wynik; nie ogłaszaj niczego jako przetestowane, jeśli nie
+  uruchomiono; nazwij ograniczenia. Repro kopiuje CAŁĄ realną konfigurację (nie „łagodniejsze" wartości domyślne).
+- **Nie ruszaj** `harness/`, `.githooks/` ani zamrożonych plików z `harness/FROZEN.lock` — to własność
+  Ownera/architekta.
+- **Budżet:** wąskie testy tego, co zmieniłeś, nie pełna suita „na wszelki wypadek"; zbiorcze wywołania narzędzi.

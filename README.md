@@ -25,3 +25,11 @@ Dokumenty w `docs/reference/` zachowano bez zmian jako źródła. Nie czytaj ich
 ## Jednoznaczny zakres
 
 V0-A w przyszłości obejmie `Research & Follow-up`; V0A-01 ma sfalsyfikować *wyłącznie* trwałość sześciostanowego cyklu akcji z fake connector. Dołożenie modelu, drugiego agenta, pełnej EME czy GHL w tym tasku jest naruszeniem kontraktu.
+
+## Proces i harness
+
+Jak modele dowożą tu działający program: role, przepływ Tasku, poziomy audytu i mechaniczna bramka — patrz
+[docs/PROCESS.md](docs/PROCESS.md). Reguły per rola: `CLAUDE.md` (implementer), [AGENTS.md](AGENTS.md) (audytor),
+[ARCHITECT_START_HERE.md](ARCHITECT_START_HERE.md) (architekt). Kolejka przekazań: [BOARD.md](BOARD.md),
+odłożone tematy: [ODLOZONE.md](ODLOZONE.md). Skrypty i szablon briefu: `harness/`; testy harnessu:
+`python -m pytest harness/tests`.

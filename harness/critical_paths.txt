@@ -1,0 +1,10 @@
+# Repo-relative globs (* within a folder, ** across folders), one per line.
+# A Task whose changed files match one of these but whose brief declares AUDIT_TIER below
+# CRITICAL gets WYMAGA_DECYZJI from backend.py (architect/owner decide -- Codex may only raise).
+# Architect: fill this in once the code layout exists. Suggested candidates for V0-A:
+#   the durable action lifecycle (state transitions, the atomic PENDING -> COMMITTING claim),
+#   connector side-effect code, and DB migrations.
+# Example (uncomment and adapt to the real layout):
+# app/lifecycle/**
+# app/connectors/**
+# migrations/**

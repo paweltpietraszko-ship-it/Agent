@@ -1,0 +1,25 @@
+#!/bin/sh
+# Mechanical guard: nothing but bookkeeping files may be committed straight to the default branch.
+# (Merges use pre-merge-commit and are not affected; the owner can still use --no-verify.)
+# Enable once per clone:  git config core.hooksPath .githooks
+branch=$(git symbolic-ref --short -q HEAD)
+case "$branch" in
+  main|master) ;;
+  *) exit 0 ;;
+esac
+# The very first commit of a brand-new repo has nothing to protect yet.
+git rev-parse --verify -q HEAD >/dev/null 2>&1 || exit 0
+bad=""
+for f in $(git diff --cached --name-only); do
+  case "$f" in
+    BOARD.md|ODLOZONE.md) ;;
+    *) bad="$bad $f" ;;
+  esac
+done
+if [ -n "$bad" ]; then
+  echo "BLOCKED: commit na '$branch' zabroniony (dozwolone tylko BOARD.md i ODLOZONE.md)." >&2
+  echo "Pliki:$bad" >&2
+  echo "Utworz branch zadania: git switch -c task/<id>" >&2
+  exit 1
+fi
+exit 0
