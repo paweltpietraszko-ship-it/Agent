@@ -58,8 +58,9 @@ DEFAULT_TOTAL_LINES = 150
 RATIO_THRESHOLD = 5
 TIERS = ("LIGHT", "STANDARD", "CRITICAL")
 PROTECTED_PREFIXES = guard.PROTECTED_PREFIXES
-ARTIFACT_PREFIXES = ("tasks/",)
-ARTIFACT_EXTENSIONS = (".txt", ".md", ".hash")
+ARTIFACT_NAME = re.compile(
+    r"tasks/[A-Za-z0-9_-]+/(?:backend_r\d+\.txt|backend_ci\.txt|audit_r\d+\.txt|architect_review_r\d+\.md|repo_before\.hash)\Z"
+)
 BASE_REFS = ("origin/main", "origin/master", "main", "master")
 ARTIFACT_FILES = ("BOARD.md", "ODLOZONE.md")
 CRITICAL_PATHS_FILE = "harness/critical_paths.txt"
@@ -88,8 +89,8 @@ def git_show(sha: str, path: str) -> bytes | None:
 
 
 def is_artifact(path: str) -> bool:
-    """Pipeline reports only: plain text under tasks/. Code under tasks/ is NOT exempt from scope and limits."""
-    return (path.startswith(ARTIFACT_PREFIXES) and path.endswith(ARTIFACT_EXTENSIONS)) or path in ARTIFACT_FILES
+    """Pipeline reports only, by exact name and role. Anything else under tasks/ is NOT exempt from scope and limits."""
+    return bool(ARTIFACT_NAME.match(path)) or path in ARTIFACT_FILES
 
 
 def parse_int_field(text: str, name: str, upper: int) -> tuple[int | None, str | None]:
@@ -167,7 +168,10 @@ def check_scope_entries(scope: list[str]) -> list[str]:
 def glob_regex(pattern: str) -> re.Pattern:
     out, i = "", 0
     while i < len(pattern):
-        if pattern.startswith("**", i):
+        if pattern.startswith("/**/", i):
+            out += "/(?:.*/)?"
+            i += 4
+        elif pattern.startswith("**", i):
             out += ".*"
             i += 2
         elif pattern[i] == "*":
@@ -219,7 +223,7 @@ def check_base(before: str, head: str) -> list[str]:
         if base != head and base != before:
             return [f"BASE: before_sha {before} is not the branch point {base} from {ref}"]
         return []
-    return []
+    return [f"BASE: none of {', '.join(BASE_REFS)} exists - cannot verify before_sha (fail closed)"]
 
 
 def check_symlinks(changed: dict[str, list[str]], head: str) -> list[str]:

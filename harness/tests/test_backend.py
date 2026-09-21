@@ -212,9 +212,9 @@ def test_missing_lock_fails(tmp_path):
 
 def test_pipeline_artifacts_are_reported_not_scope_checked(repo_and_base):
     repo, base = repo_and_base
-    head = deliver(repo, {"tasks/T1/notes.md": "n\n", "BOARD.md": "board\n"})
+    head = deliver(repo, {"tasks/T1/architect_review_r1.md": "n\n", "BOARD.md": "board\n"})
     code, out = repo.backend(base, head)
-    assert code == 0 and "tasks/T1/notes.md" in out and "BOARD.md" in out
+    assert code == 0 and "tasks/T1/architect_review_r1.md" in out and "BOARD.md" in out
 
 
 def test_critical_paths_force_a_tier_decision(tmp_path):
@@ -293,3 +293,27 @@ def test_symlink_in_scope_fails(repo_and_base):
     repo.git("commit", "-q", "-m", "symlink")
     code, out = repo.backend(base, repo.git("rev-parse", "HEAD"))
     assert code == 1 and "SYMLINK: app/link" in out
+
+
+def test_report_named_text_under_tasks_still_needs_scope(repo_and_base):
+    repo, base = repo_and_base
+    head = deliver(repo, {"tasks/T1/payload.txt": "".join(f"v{i}" + NL for i in range(2000)), "app/note.txt": "ok" + NL})
+    code, out = repo.backend(base, head)
+    assert code == 1 and "DIFF_SCOPE: file outside TASK_SCOPE: tasks/T1/payload.txt" in out
+
+
+def test_missing_base_ref_fails_closed(repo_and_base):
+    repo, base = repo_and_base
+    repo.git("switch", "-q", "-c", "task/x")
+    bad = deliver(repo, {"other.txt": "outside scope" + NL})
+    head = deliver(repo, {"app/note.txt": "ok" + NL})
+    repo.git("branch", "-q", "-D", "main")
+    code, out = repo.backend(bad, head)
+    assert code == 1 and "BASE: none of" in out
+
+
+def test_double_star_matches_zero_or_more_directories():
+    import backend
+    assert backend.in_scope("app/x.py", ["app/**/*.py"]) and backend.in_scope("app/sub/x.py", ["app/**/*.py"])
+    assert backend.in_scope("app/a/b/x.py", ["app/**/*.py"]) and not backend.in_scope("app/x.txt", ["app/**/*.py"])
+    assert backend.in_scope("app/x.py", ["app/**"]) and not backend.in_scope("appx.py", ["app/**"])
