@@ -33,8 +33,7 @@ projekt, sens testu, jakość sformułowań. Tło: [DETERMINISM_PATTERNS.md](DET
    Action nie blokuje) = decyzja Ownera/architekta, nie CC.
    Bazą pomiaru jest punkt odejścia brancha od `main` (`git merge-base`), liczony przez workflow, a nie
    wartość zapisana w repo — inaczej model mógłby przesunąć bazę i ukryć wcześniejsze commity (`BASE`).
-   Brief czytany jest z commita, nie z katalogu roboczego. Pod `tasks/` wolne od kontroli zakresu są tylko
-   pliki `.txt/.md/.hash` (raporty); kod tam podlega zakresowi i limitom. Symlinki w zmianach = FAIL.
+   Brief czytany jest z commita, nie z katalogu roboczego. Symlinki w zmianach = FAIL.
    Wzorzec `**` oznacza „zero lub więcej poziomów katalogu" (decyzja Ownera): `app/**/*.py` obejmuje `app/x.py` i `app/sub/x.py`.
    Raportami wolnymi od zakresu są tylko pliki o dokładnych nazwach: `tasks/<id>/backend_r<n>.txt`, `audit_r<n>.txt`,
    `architect_review_r<n>.md`, `repo_before.hash`. Brak refu `main`/`master` = FAIL (bramka nie zgaduje bazy).
