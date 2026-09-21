@@ -46,10 +46,12 @@ Architekt (ChatGPT) widzi tylko GitHuba, Codex tylko exact SHA. Dlatego:
 - Zmiany `harness/`, `.githooks/`, `.github/` nie są Taskiem: tylko świadomy commit Ownera/architekta + audyt Codexa.
 
 ## 5. Stan (aktualizuj: data + SHA `main`)
-- 2026-09-21: zestaw startowy harnessu zmergowany do `main` po 4 rundach audytu Codexa (PASS r4).
-  Repo ustawione jako publiczne; na `main` reguła blokująca force-push i usuwanie. **Jeszcze niewłączone:** wymóg
-  zielonego `gate` (najpierw bramka musi przepuszczać PR-y zmieniające wyłącznie BOARD.md/ODLOZONE.md — zadanie
-  harnessu do audytu).
+- 2026-09-21: zestaw startowy harnessu i bramka `pull_request_target` (z wyjątkiem dla PR zmieniających tylko
+  BOARD.md/ODLOZONE.md) są na `main` po audytach Codexa (kit PASS r4, bramka PASS r1). Repo publiczne; na `main`
+  ruleset blokuje force-push i usuwanie. **Jeszcze niewłączone:** wymóg zielonego `gate` + PR przed merge.
+  Wymaga decyzji Ownera/architekta: architekt commituje dziś briefy i dokumenty prosto na `main` — wymóg PR by to
+  zablokował; poza tym zmiana pliku spoza BOARD/ODLOZONE (np. tego pliku) wymagałaby briefu. Rozważyć dopisanie
+  `CC_START_HERE.md` i `CODEX_START_HERE.md` do wyjątku księgowego (mała zmiana `bookkeeping_only.py`, audyt).
 - Jedyny aktualny Task: V0A-01 (Core Durable Action Lifecycle). Brief `tasks/TASK_V0A_01_CORE_RECOVERY.md` nie ma
   jeszcze `TASK_SCOPE`/`AUDIT_TIER` — dopisuje architekt i commituje na `main` PRZED implementacją.
 
