@@ -27,7 +27,7 @@ projekt, sens testu, jakość sformułowań. Tło: [DETERMINISM_PATTERNS.md](DET
    `python harness/task_init.py <id>`. Implementuje tylko `TASK_SCOPE`, małymi commitami.
 4. **Bramka** odpala się **sama na GitHubie** po każdym pushu na dowolny branch poza `main` (wyjątków po nazwie brancha nie ma — inaczej nazwa wyłączałaby bramkę) (`.github/workflows/gate.yml`) —
    nie zależy od tego, czy CC pamięta ją uruchomić. Brief musi leżeć w `tasks/<id>.md` albo
-   `tasks/<id>/brief.md`, a SHA bazowy w `tasks/<id>/repo_before.hash` (robi to `task_init.py`).
+   `tasks/<id>/brief.md`, a SHA bazowy liczony jest z `git merge-base origin/main HEAD`.
    Lokalnie ten sam skrypt: `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`.
    Wynik cytowany dosłownie w BOARD.md. FAIL (czerwony) = poprawka. WYMAGA_DECYZJI (żółte ostrzeżenie,
    Action nie blokuje) = decyzja Ownera/architekta, nie CC.
