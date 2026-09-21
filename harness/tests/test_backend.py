@@ -5,6 +5,8 @@ import pytest
 
 from conftest import DEFAULT_BRIEF, build_repo
 
+NL = chr(10)
+
 
 def deliver(repo, files: dict[str, str]) -> str:
     for rel, content in files.items():
@@ -246,6 +248,48 @@ def test_shipped_brief_template_parses_with_declared_defaults():
     import backend
     from conftest import HARNESS
 
-    brief = backend.read_brief(HARNESS / "templates" / "brief.md")
+    brief = backend.read_brief((HARNESS / "templates" / "brief.md").read_bytes())
     assert brief.scope == ["app/**", "tests/test_<x>.py"]
     assert (brief.tier, brief.max_new_files, brief.total_lines) == ("STANDARD", 2, 150)
+
+
+def git_stdin(repo, data, *args):
+    import subprocess
+    out = subprocess.run(["git", *args], cwd=repo.root, input=data, capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    return out.stdout.strip()
+
+
+def test_hidden_earlier_commit_via_moved_baseline_fails(repo_and_base):
+    repo, base = repo_and_base
+    repo.git("switch", "-q", "-c", "task/x")
+    bad = deliver(repo, {"other.txt": "outside scope"+NL})
+    head = deliver(repo, {"app/note.txt": "ok"+NL})
+    code, out = repo.backend(bad, head)
+    assert code == 1 and "BASE: before_sha" in out
+    code, out = repo.backend(base, head)
+    assert code == 1 and "DIFF_SCOPE: file outside TASK_SCOPE: other.txt" in out
+
+
+def test_code_under_tasks_is_not_exempt(repo_and_base):
+    repo, base = repo_and_base
+    head = deliver(repo, {"tasks/T1/payload.py": "".join(f"v{i} = {i}"+NL for i in range(2000)), "app/note.txt": "ok"+NL})
+    code, out = repo.backend(base, head)
+    assert code == 1 and "DIFF_SCOPE: file outside TASK_SCOPE: tasks/T1/payload.py" in out
+
+
+def test_brief_is_read_from_head_not_working_tree(repo_and_base):
+    repo, base = repo_and_base
+    head = deliver(repo, {"other.txt": "outside scope"+NL})
+    repo.write("tasks/T1.md", DEFAULT_BRIEF + "- other.txt"+NL)
+    code, out = repo.backend(base, head)
+    assert code == 1 and "DIFF_SCOPE: file outside TASK_SCOPE: other.txt" in out
+
+
+def test_symlink_in_scope_fails(repo_and_base):
+    repo, base = repo_and_base
+    blob = git_stdin(repo, "../../docs/SPEC.md", "hash-object", "-w", "--stdin")
+    repo.git("update-index", "--add", "--cacheinfo", f"120000,{blob},app/link")
+    repo.git("commit", "-q", "-m", "symlink")
+    code, out = repo.backend(base, repo.git("rev-parse", "HEAD"))
+    assert code == 1 and "SYMLINK: app/link" in out

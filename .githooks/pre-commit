@@ -9,13 +9,23 @@ case "$branch" in
 esac
 # The very first commit of a brand-new repo has nothing to protect yet.
 git rev-parse --verify -q HEAD >/dev/null 2>&1 || exit 0
+# NUL-separated names, read line by line with IFS= so trailing spaces survive ("BOARD.md " is not "BOARD.md").
+names=$(git diff --cached --name-only -z | tr '\0' '\n')
+entries=$(git diff --cached --name-only -z | tr -cd '\0' | wc -c | tr -d ' ')
+lines=$(printf '%s\n' "$names" | grep -c '' | tr -d ' ')
 bad=""
-for f in $(git diff --cached --name-only); do
-  case "$f" in
-    BOARD.md|ODLOZONE.md) ;;
-    *) bad="$bad $f" ;;
-  esac
-done
+if [ -n "$names" ]; then
+  # A name that itself contains a newline would split into several lines: refuse it outright.
+  [ "$entries" -eq "$lines" ] || bad=" (nazwa pliku z nowa linia)"
+  while IFS= read -r f; do
+    case "$f" in
+      BOARD.md|ODLOZONE.md) ;;
+      *) bad="$bad [$f]" ;;
+    esac
+  done <<EOF
+$names
+EOF
+fi
 if [ -n "$bad" ]; then
   echo "BLOCKED: commit na '$branch' zabroniony (dozwolone tylko BOARD.md i ODLOZONE.md)." >&2
   echo "Pliki:$bad" >&2

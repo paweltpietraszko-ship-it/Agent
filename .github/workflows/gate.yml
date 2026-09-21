@@ -25,10 +25,10 @@ jobs:
           brief=""
           for c in "tasks/${id}.md" "tasks/${id}/brief.md"; do [ -f "$c" ] && brief="$c" && break; done
           [ -n "$brief" ] || { echo "::error::brak briefu: tasks/${id}.md ani tasks/${id}/brief.md"; exit 1; }
-          before=$(sed -n 's/^HEAD_SHA: //p' "tasks/${id}/repo_before.hash")
-          [ -n "$before" ] || { echo "::error::brak tasks/${id}/repo_before.hash (task_init.py)"; exit 1; }
+          before=$(git merge-base origin/main HEAD)
+          [ -n "$before" ] || { echo "::error::brak wspolnej historii z origin/main"; exit 1; }
           set +e
-          python harness/backend.py "$brief" "$before" "$(git rev-parse HEAD)" "tasks/${id}/backend_ci.txt" | tee out.txt
+          python harness/backend.py "$brief" "$before" "$(git rev-parse HEAD)" "backend_ci.txt" | tee out.txt
           code=${PIPESTATUS[0]}
           set -e
           { echo '```'; cat out.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

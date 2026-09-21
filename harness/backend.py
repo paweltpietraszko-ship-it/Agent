@@ -21,6 +21,8 @@ CHECKS:
   STALE_HEAD / ANCESTRY     head_sha is the repository HEAD; before_sha is its ancestor
   GIT_DIFF                  git must succeed, never silently ignored
   BRIEF_FROZEN              the brief is unchanged between before_sha and head_sha
+  BASE                      before_sha is the branch point from main (earlier Task commits cannot be hidden)
+  SYMLINK                   changed files may not be symbolic links
   FROZEN_LOCK               every file in harness/FROZEN.lock matches its hash at head_sha
   DIFF_SCOPE / NEW_FILES    every changed file is in scope; at most MAX_NEW_FILES new files
   SYNTAX / RUFF             changed .py files parse and pass harness/ruff.toml
@@ -56,13 +58,15 @@ DEFAULT_TOTAL_LINES = 150
 RATIO_THRESHOLD = 5
 TIERS = ("LIGHT", "STANDARD", "CRITICAL")
 PROTECTED_PREFIXES = guard.PROTECTED_PREFIXES
-ARTIFACT_PREFIXES = ("tasks/", "log/")
+ARTIFACT_PREFIXES = ("tasks/",)
+ARTIFACT_EXTENSIONS = (".txt", ".md", ".hash")
+BASE_REFS = ("origin/main", "origin/master", "main", "master")
 ARTIFACT_FILES = ("BOARD.md", "ODLOZONE.md")
 CRITICAL_PATHS_FILE = "harness/critical_paths.txt"
 RUFF_CONFIG = "harness/ruff.toml"
 CHECKS = (
     "TASK_SCOPE / STALE_HEAD / ANCESTRY / GIT_DIFF / BRIEF_FROZEN / FROZEN_LOCK / DIFF_SCOPE / "
-    "NEW_FILES / SYNTAX / RUFF / SIZE_FILE / SIZE_FUNC / RATIO / TOTAL_LINES / AUDIT_TIER"
+    "NEW_FILES / SYNTAX / RUFF / SIZE_FILE / SIZE_FUNC / RATIO / TOTAL_LINES / AUDIT_TIER / BASE / SYMLINK"
 )
 
 
@@ -84,7 +88,8 @@ def git_show(sha: str, path: str) -> bytes | None:
 
 
 def is_artifact(path: str) -> bool:
-    return path.startswith(ARTIFACT_PREFIXES) or path in ARTIFACT_FILES
+    """Pipeline reports only: plain text under tasks/. Code under tasks/ is NOT exempt from scope and limits."""
+    return (path.startswith(ARTIFACT_PREFIXES) and path.endswith(ARTIFACT_EXTENSIONS)) or path in ARTIFACT_FILES
 
 
 def parse_int_field(text: str, name: str, upper: int) -> tuple[int | None, str | None]:
@@ -117,11 +122,14 @@ def parse_scope(text: str) -> list[str]:
     return scope
 
 
-def read_brief(brief_path: Path) -> Brief:
+def read_brief(raw: bytes | None) -> Brief:
+    """Parses the brief exactly as committed at head (never the working tree)."""
+    if raw is None:
+        raise ValueError("brief is not committed at head_sha")
     try:
-        text = brief_path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as exc:
-        raise ValueError(f"unable to read brief: {exc}") from exc
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"brief is not valid UTF-8: {exc}") from exc
     scope = parse_scope(text)
     new_files, err1 = parse_int_field(text, "MAX_NEW_FILES", 200)
     total, err2 = parse_int_field(text, "TOTAL_LINES_THRESHOLD", 20000)
@@ -197,6 +205,29 @@ def check_commits(before_arg: str, head_arg: str) -> tuple[str, str, list[str]]:
         if git(["merge-base", "--is-ancestor", before, head]).returncode != 0:
             blockers.append(f"ANCESTRY: before_sha {before} is not an ancestor of head_sha {head}")
     return before or before_arg, head or head_arg, blockers
+
+
+def check_base(before: str, head: str) -> list[str]:
+    """before_sha must be the branch point from the default branch, so earlier Task commits cannot be hidden."""
+    for ref in BASE_REFS:
+        if git(["rev-parse", "--verify", "-q", ref]).returncode != 0:
+            continue
+        found = git(["merge-base", head, ref])
+        base = found.stdout.strip()
+        if found.returncode != 0 or not base:
+            return [f"BASE: head_sha shares no history with {ref}"]
+        if base != head and base != before:
+            return [f"BASE: before_sha {before} is not the branch point {base} from {ref}"]
+        return []
+    return []
+
+
+def check_symlinks(changed: dict[str, list[str]], head: str) -> list[str]:
+    paths = changed["added"] + changed["modified"]
+    if not paths:
+        return []
+    listing = git(["ls-tree", head, "--", *paths]).stdout.splitlines()
+    return [f"SYMLINK: {line.split(chr(9), 1)[1]} is a symbolic link (not allowed)" for line in listing if line.startswith("120000 ")]
 
 
 def changed_files(before: str, head: str) -> tuple[dict[str, list[str]], str | None]:
@@ -410,21 +441,24 @@ def run_backend(brief_arg: Path, before_arg: str, head_arg: str, output_path: Pa
 
     blockers: list[str] = []
     brief = Brief([], DEFAULT_MAX_NEW_FILES, DEFAULT_TOTAL_LINES, "STANDARD")
-    try:
-        brief = read_brief(brief_abs)
-        blockers += check_scope_entries(brief.scope)
-    except ValueError as exc:
-        blockers.append(f"TASK_SCOPE: {exc}")
-
     before, head, commit_errors = check_commits(before_arg, head_arg)
     blockers += commit_errors
     changed: dict[str, list[str]] = {"added": [], "modified": [], "deleted": []}
     wymaga: list[str] = []
     if not commit_errors:
+        blockers += check_base(before, head)
+        try:
+            if brief_rel is None:
+                raise ValueError("brief must live inside the repository")
+            brief = read_brief(git_show(head, brief_rel))
+            blockers += check_scope_entries(brief.scope)
+        except ValueError as exc:
+            blockers.append(f"TASK_SCOPE: {exc}")
         changed, diff_err = changed_files(before, head)
         blockers += [f"GIT_DIFF: {diff_err}"] if diff_err else []
         blockers += check_brief_frozen(brief_rel, before, head)
         blockers += check_frozen_lock(head)
+        blockers += check_symlinks(changed, head)
         if not any(b.startswith(("TASK_SCOPE", "SCOPE_ENTRY")) for b in blockers):
             blockers += check_scope_and_files(changed, brief)
             py_errors, wymaga = check_python(changed, brief, head)

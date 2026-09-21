@@ -31,6 +31,12 @@ projekt, sens testu, jakość sformułowań. Tło: [DETERMINISM_PATTERNS.md](DET
    Lokalnie ten sam skrypt: `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`.
    Wynik cytowany dosłownie w BOARD.md. FAIL (czerwony) = poprawka. WYMAGA_DECYZJI (żółte ostrzeżenie,
    Action nie blokuje) = decyzja Ownera/architekta, nie CC.
+   Bazą pomiaru jest punkt odejścia brancha od `main` (`git merge-base`), liczony przez workflow, a nie
+   wartość zapisana w repo — inaczej model mógłby przesunąć bazę i ukryć wcześniejsze commity (`BASE`).
+   Brief czytany jest z commita, nie z katalogu roboczego. Pod `tasks/` wolne od kontroli zakresu są tylko
+   pliki `.txt/.md/.hash` (raporty); kod tam podlega zakresowi i limitom. Symlinki w zmianach = FAIL.
+   Wzorzec `**` oznacza „jeden lub więcej poziomów": `app/**` obejmuje całe drzewo, ale `app/**/*.py` NIE
+   obejmuje `app/x.py` (pisz `app/**`).
    Twarde reguły (FAIL): zakres, zamrożone pliki, ochrona `harness/` `.github/` `.githooks/`, składnia, ruff,
    twarde limity rozmiaru. Miękkie (WYMAGA_DECYZJI): próg rozmiaru, RATIO/TOTAL_LINES, poziom audytu.
    Rozmiar: kod 600 linii (twardo 900), testy 1200 (twardo 1800), funkcja 50 (twardo 80). Powyżej progu

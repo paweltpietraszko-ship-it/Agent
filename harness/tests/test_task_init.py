@@ -70,3 +70,15 @@ def test_hook_allows_task_branches_and_the_first_commit(tmp_path):
     repo.git("add", "b.py")
     repo.git("commit", "-q", "-m", "on task branch")
     assert repo.git("log", "-1", "--format=%s") == "on task branch"
+
+
+
+def test_hook_blocks_board_lookalike_with_trailing_space(repo_and_base):
+    import subprocess
+    repo, _ = repo_and_base
+    install_hooks(repo)
+    repo.git("config", "core.protectNTFS", "false")
+    blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=repo.root, input="x", capture_output=True, text=True).stdout.strip()
+    repo.git("update-index", "--add", "--cacheinfo", f"100644,{blob},BOARD.md ")
+    result = subprocess.run(["git", "commit", "-q", "-m", "sneaky"], cwd=repo.root, capture_output=True, text=True)
+    assert result.returncode != 0 and "BLOCKED" in result.stderr
