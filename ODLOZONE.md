@@ -13,3 +13,4 @@ Krótki opis (2-4 zdania). Dlaczego odłożone. Gdzie szukać kontekstu (plik, t
 ```
 
 ---
+
