@@ -12,8 +12,8 @@ working tree, so an uncommitted fix cannot make a bad commit pass.
 BRIEF FIELDS (declared by the architect in the frozen brief, never by the implementer):
   TASK_SCOPE:                 "- path" lines. Exact repo-relative files or directory
                               globs ("app/**", "tests/*.py"). First path segment must be literal.
-  MAX_NEW_FILES: <n>          optional, default 2
-  TOTAL_LINES_THRESHOLD: <n>  optional, default 150
+  MAX_NEW_FILES: <n>          optional, 1-200, default 2
+  TOTAL_LINES_THRESHOLD: <n>  optional, 1-20000, default 150
   AUDIT_TIER: LIGHT|STANDARD|CRITICAL   optional, default STANDARD
 
 CHECKS:
@@ -85,14 +85,14 @@ def is_artifact(path: str) -> bool:
     return path.startswith(ARTIFACT_PREFIXES) or path in ARTIFACT_FILES
 
 
-def parse_int_field(text: str, name: str) -> tuple[int | None, str | None]:
+def parse_int_field(text: str, name: str, upper: int) -> tuple[int | None, str | None]:
     found = re.findall(rf"^{name}:[ \t]*(\S*)[ \t]*$", text, re.MULTILINE)
     if not found:
         return None, None
     if len(found) > 1:
         return None, f"{name} declared more than once"
-    if not found[0].isdigit() or not 1 <= int(found[0]) <= 1000:
-        return None, f"{name} must be an integer 1-1000, got {found[0]!r}"
+    if not found[0].isdigit() or not 1 <= int(found[0]) <= upper:
+        return None, f"{name} must be an integer 1-{upper}, got {found[0]!r}"
     return int(found[0]), None
 
 
@@ -121,8 +121,8 @@ def read_brief(brief_path: Path) -> Brief:
     except (OSError, UnicodeDecodeError) as exc:
         raise ValueError(f"unable to read brief: {exc}") from exc
     scope = parse_scope(text)
-    new_files, err1 = parse_int_field(text, "MAX_NEW_FILES")
-    total, err2 = parse_int_field(text, "TOTAL_LINES_THRESHOLD")
+    new_files, err1 = parse_int_field(text, "MAX_NEW_FILES", 200)
+    total, err2 = parse_int_field(text, "TOTAL_LINES_THRESHOLD", 20000)
     tiers = re.findall(r"^AUDIT_TIER:[ \t]*(\S*)[ \t]*$", text, re.MULTILINE)
     errors = [e for e in (err1, err2) if e]
     if len(tiers) > 1 or (tiers and tiers[0] not in TIERS):

@@ -7,7 +7,7 @@ TOTAL_LINES_THRESHOLD: 150
 AUDIT_UNIT: <nazwa całości, jeśli Task jest częścią większej jednostki audytu; inaczej usuń tę linię>
 
 <!-- Pola nagłówka (od pierwszej kolumny, bez spacji): AUDIT_TIER = LIGHT|STANDARD|CRITICAL, dokładnie raz.
-     MAX_NEW_FILES i TOTAL_LINES_THRESHOLD opcjonalne (domyślnie 2 i 150), liczby 1-1000. Czyta je harness/backend.py. -->
+     MAX_NEW_FILES i TOTAL_LINES_THRESHOLD opcjonalne (domyślnie 2 i 150), zakresy 1-200 i 1-20000. Czyta je harness/backend.py. -->
 
 ## Cel (zachowanie widoczne dla Ownera, prostym językiem)
 

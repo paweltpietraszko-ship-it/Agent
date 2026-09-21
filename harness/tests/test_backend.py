@@ -202,7 +202,7 @@ def test_critical_paths_force_a_tier_decision(tmp_path):
     assert code == 0 and "AUDIT_TIER: CRITICAL" in out
 
 
-@pytest.mark.parametrize("line", ["AUDIT_TIER: EXTREME", "MAX_NEW_FILES: many", "MAX_NEW_FILES: 0", "TOTAL_LINES_THRESHOLD: 5000"])
+@pytest.mark.parametrize("line", ["AUDIT_TIER: EXTREME", "MAX_NEW_FILES: many", "MAX_NEW_FILES: 0", "TOTAL_LINES_THRESHOLD: 20001", "MAX_NEW_FILES: 201"])
 def test_invalid_brief_fields_fail(tmp_path, line):
     repo, base = build_repo(tmp_path / "r", brief=f"{line}\nTASK_SCOPE:\n- app/**\n")
     code, out = repo.backend(base, deliver(repo, {"app/x.py": "x = 1\n"}))
