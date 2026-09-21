@@ -25,9 +25,13 @@ projekt, sens testu, jakość sformułowań. Tło: [DETERMINISM_PATTERNS.md](DET
 2. CC robi krótką recenzję merytoryczną briefu (sens, zakres, luki). Niejasne = pyta, nie zgaduje.
 3. CC: `git config core.hooksPath .githooks` (raz na klon), `git switch -c task/<id>`,
    `python harness/task_init.py <id>`. Implementuje tylko `TASK_SCOPE`, małymi commitami.
-4. **Bramka** odpala się **sama na GitHubie** po każdym pushu na dowolny branch poza `main` (wyjątków po nazwie brancha nie ma — inaczej nazwa wyłączałaby bramkę) (`.github/workflows/gate.yml`) —
-   nie zależy od tego, czy CC pamięta ją uruchomić. Brief musi leżeć w `tasks/<id>.md` albo
-   `tasks/<id>/brief.md`, a SHA bazowy liczony jest z `git merge-base origin/main HEAD`.
+4. **Bramka** odpala się **sama na GitHubie** przy każdym pull requeście do `main`
+   (`.github/workflows/gate.yml`, `pull_request_target`): działa z wersji workflow i skryptów z `main`, więc
+   branch nie może jej zmienić ani wyłączyć; kod z brancha jest tylko danymi. Nie zależy od tego, czy CC
+   pamięta ją uruchomić. Brief musi leżeć w `tasks/<id>.md` albo `tasks/<id>/brief.md` (id = nazwa brancha bez
+   `task/`); bazą pomiaru jest `git merge-base origin/main HEAD`. PR zmieniający WYŁĄCZNIE `BOARD.md` i/lub
+   `ODLOZONE.md` (edycja w miejscu, zwykłe pliki — `harness/bookkeeping_only.py`) nie potrzebuje briefu i dostaje
+   zielone; cokolwiek innego w tym samym PR-ze uruchamia pełną bramkę.
    Lokalnie ten sam skrypt: `python harness/backend.py <brief> <before_sha> <head_sha> tasks/<id>/backend_r<n>.txt`.
    Wynik cytowany dosłownie w BOARD.md. FAIL (czerwony) = poprawka. WYMAGA_DECYZJI (żółte ostrzeżenie,
    Action nie blokuje) = decyzja Ownera/architekta, nie CC.
@@ -112,7 +116,8 @@ Zawsze `git pull` przed edycją: architekt i Codex piszą tu równolegle. Rzeczy
 | Plik | Rola |
 |---|---|
 | `harness/backend.py` | bramka mechaniczna (PASS/FAIL/WYMAGA_DECYZJI), mierzy dostarczony commit |
-| `.github/workflows/gate.yml` | uruchamia bramkę automatycznie po pushu na `task/*` |
+| `.github/workflows/gate.yml` | uruchamia bramkę automatycznie przy PR do `main` (z wersji z `main`) |
+| `harness/bookkeeping_only.py` | wyjątek: PR zmieniający tylko BOARD.md/ODLOZONE.md nie potrzebuje briefu |
 | `harness/guard.py` | blokada zamrożonych plików `harness/FROZEN.lock` |
 | `harness/task_init.py` | start Tasku + zapis SHA bazowego + kontrola hooka |
 | `harness/critical_paths.txt` | ścieżki wymuszające CRITICAL |
@@ -125,10 +130,10 @@ Zawsze `git pull` przed edycją: architekt i Codex piszą tu równolegle. Rzeczy
 `harness/`, `.githooks/` i `.github/` są chronione: bramka odrzuca Task, którego zakres ich dotyka. Zmienia je
 wyłącznie Owner/architekt, świadomym commitem.
 
-## 8. Ochrona `main` (jednorazowo, robi Owner w ustawieniach repo)
+## 8. Ochrona `main`
 
-Bez tego bramka jest tylko widoczna, nie wiążąca. Na publicznym repo jest to darmowe: Settings → Rules →
-New branch ruleset → cel `main` → „Require status checks to pass" (`gate`) + „Block force pushes".
-Uwaga: ruleset nie zna wyjątku „tylko BOARD.md", a dziś BOARD.md/ODLOZONE.md idą prosto na `main`. Do
-rozstrzygnięcia z Ownerem: albo Owner ma bypass i tylko on pisze na `main`, albo BOARD.md też idzie
-przez branch. Do czasu tej decyzji ruleset nie jest włączany.
+Ruleset `main-protect` (bez listy obejść, wiąże także CC): blokuje force-push i usuwanie. Wymóg zielonego
+sprawdzenia `gate` włączamy dopiero po zmergowaniu tej bramki, bo wymusza on drogę przez pull request:
+`gh pr create` + `gh pr merge` (BOARD.md/ODLOZONE.md przechodzą przez wyjątek z §3, bez briefu). Do tego czasu
+BOARD.md idzie prosto na `main` (hook to dopuszcza). Włączenie: ruleset → reguła „Require status checks"
+(`gate`) + „Require a pull request before merging" (0 zatwierdzeń), nadal bez obejść.
