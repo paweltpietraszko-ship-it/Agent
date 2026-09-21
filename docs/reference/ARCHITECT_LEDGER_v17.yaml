@@ -1,0 +1,1035 @@
+meta:
+  purpose: machine-oriented architecture research ledger for Hybrid Operational System / Agent
+  audience: architect_model
+  created: 2026-09-17
+  status: active
+  update_policy: append/update whenever research materially changes architecture hypotheses
+  human_readability: secondary
+
+principles:
+  P001:
+    status: working_strong
+    statement: "Global orchestration + local intelligence. Process authority/state stays outside any single LLM."
+    basis: "user workflow evidence + multi-agent failure research"
+  P002:
+    status: working_strong
+    statement: "Models should exchange artifacts/evidence, not persuasive conversational context."
+    basis: "user workflow: architect -> implementer -> auditor; verifier isolation patterns"
+  P003:
+    status: working_strong
+    statement: "LLM findings/PASS are not source of truth when a deterministic/external oracle exists."
+  P004:
+    status: working_strong
+    statement: "Adopt -> configure -> write. Search current state-of-art before designing custom mechanisms."
+  P005:
+    status: working_strong
+    statement: "Unknown/fragile backend cases must route to bounded AI/HUMAN instead of crash/guess."
+
+hypotheses:
+  H001:
+    status: working
+    statement: "Executor routing should use per-task-family capability profiles, not one global difficulty score."
+    falsified_alternative: "single difficulty score 0-100"
+    evidence:
+      - "IRT-Router: model ability and item difficulty modeled separately"
+      - "RouteLMT: expected marginal gain between routes more useful than absolute task difficulty"
+    source_urls:
+      - "https://arxiv.org/abs/2506.01048"
+      - "https://arxiv.org/abs/2604.22520"
+    falsifier: "evidence that a simple global score matches/adapts as well under distribution shift"
+
+  H002:
+    status: working_strong
+    statement: "Criticality/impact of the process is independent from executor confidence/capability and must affect routing."
+    rationale: "80% confidence on critical irreversible action is not equivalent to 30% confidence on low-impact reversible action"
+    dimensions_candidate:
+      - capability_or_uncertainty
+      - criticality_or_impact
+      - recoverability
+      - detectability_or_oracle_strength
+    evidence:
+      - "cost-sensitive learning-to-defer"
+      - "classical FMEA separates severity/occurrence/detectability"
+    falsifier: "robust evidence that one calibrated scalar loss preserves all required operational distinctions"
+
+  H003:
+    status: working_strong
+    statement: "Some routing constraints must be hard eligibility filters before scoring."
+    examples:
+      - confidentiality
+      - authority
+      - permissions
+      - tool availability
+      - forbidden actions
+    implication: "high predicted capability cannot override LOCAL_ONLY or OWNER_AUTHORITY"
+
+  H004:
+    status: working
+    statement: "High-criticality work may require independent verification even when executor capability is high."
+    falsifier: "task classes with strong deterministic oracle where duplicate AI verification adds no safety/utility"
+
+  H005:
+    status: working_strong
+    statement: "Model isolation plus artifact-mediated verification is preferable to debate for this system."
+    user_evidence: "current workflow keeps models isolated; code/findings are handoff artifacts"
+    research_note: "multi-agent debate can create correlated persuasion/consensus failure"
+
+  H006:
+    status: rejected
+    statement: "Three models are always better than one."
+    reason: "benefit concentrated on difficult tasks; coordination can reduce performance/cost efficiency on easy tasks"
+
+  H007:
+    status: rejected
+    statement: "LLM auditor PASS can authorize transition by itself."
+    reason: "LLM verifiers can accept outputs that deterministic graders reject; audit finding is candidate evidence, not truth"
+
+  H008:
+    status: rejected
+    statement: "Different model families guarantee independent errors."
+    reason: "error correlation persists across strong models/families"
+
+  H009:
+    status: working
+    statement: "Multi-model verification should be escalation strategy, not mandatory ritual for every task."
+    trigger_candidates:
+      - high criticality
+      - weak/no oracle
+      - low capability margin
+      - novelty/OOD
+      - irreversible side effect
+
+  H010:
+    status: working
+    statement: "Capability profiles must be versioned by executor/model version + task family + time window."
+    reason: "model/tool capability drifts and task distribution changes"
+
+  H011:
+    status: working
+    statement: "Router must support NO_SAFE_ROUTE as valid result."
+    reason: "if all eligible executors are below acceptable risk threshold, forced selection is unsafe"
+
+  H012:
+    status: open_question
+    statement: "Task-family classification must not reintroduce a central opaque LLM router."
+    next_research: "deterministic taxonomy + semantic fallback + learned defer/router approaches"
+
+  H013:
+    status: working_strong
+    statement: "Criticality should be determined by deterministic policy combining a static process/task risk floor with dynamic request-time signals."
+    evidence:
+      - "AWS Agentic AI Lens explicitly recommends deterministic risk classification combining static operation class with dynamic request-time signals."
+      - "Governed APA formalizes a policy-derived floor guardrail so runtime LLM decisions cannot under-escalate below mandatory policy."
+    implication: "LLM may contribute evidence about the case, but must not own the minimum approval/risk tier."
+    falsifier: "evidence that opaque model-based risk classification provides equal or better safety/auditability without deterministic policy floor"
+
+  H014:
+    status: working_strong
+    statement: "Context compression must preserve execution dependencies, not merely semantic relevance."
+    evidence:
+      - "MAGE reports semantic-similarity memory can fragment decision trajectories; hierarchical execution-state memory improves success while reducing tokens."
+      - "ReTree/MAGE preserve source-linked or state-linked paths and support revision from a boundary rather than flat transcript recall."
+    implication: "HOT/WARM/COLD is insufficient as a storage policy unless dependency/provenance links determine what is rehydrated."
+    falsifier: "controlled evidence that flat recency/semantic retrieval matches dependency-aware state reconstruction on interdependent long-horizon tasks"
+
+  H015:
+    status: working
+    statement: "Bounded work items should contain the dependency closure required for execution, not globally minimal context."
+    evidence:
+      - "Coding-agent studies show excess repository context can hurt success/cost, and local edit context is often sufficient."
+      - "Runtime-structured decomposition improves retry behavior versus monolithic/static decomposition, but static decomposition alone can be worse when dependencies/failure propagation are mishandled."
+      - "ACON shows compression can preserve most performance when optimized against full-context success/failure pairs, implying naive compression is not guaranteed safe."
+    implication: "Minimal context is a goal subject to sufficiency; process core/context manager must include active constraints, dependency-linked artifacts, and required evidence."
+    falsifier: "evidence that fixed minimal capsules remain sufficient across dependency-heavy tasks without dependency-aware retrieval/state"
+
+architecture_candidate:
+  pipeline:
+    - work_item
+    - hard_eligibility_filters
+    - eligible_executors
+    - capability_profiles
+    - criticality_and_recoverability_policy
+    - route
+    - executor
+    - candidate_result_plus_evidence
+    - acceptance_router
+    - oracle_or_independent_auditor_or_human
+    - authoritative_transition
+  invariant: "AI auditor is never above a stronger deterministic/external oracle"
+  unknown_handling: "KNOWN->PROGRAM; UNKNOWN_SEMANTIC->AI; UNRESOLVED/AUTHORITY->HUMAN; INVALID/FORBIDDEN->STOP"
+
+research_findings:
+  F001:
+    finding: "Long autonomous trajectories fail from accumulated local errors, plan anchoring, and poor replanning."
+    architectural_effect: "prefer bounded work items and external state/control"
+  F002:
+    finding: "More deliberation/self-critique is not monotonically beneficial; can increase cost and degrade performance."
+    architectural_effect: "prefer better state + clear roles over recursive LLM evaluation"
+  F003:
+    finding: "Verifier quality has a ceiling; difficult generator errors may not be detectable by another LLM."
+    architectural_effect: "use tests/solvers/schemas/real-world evidence whenever available"
+  F004:
+    finding: "Cross-family verifier diversity can help but is not proof of independence."
+    architectural_effect: "measure empirical detection profile by error class"
+  F005:
+    finding: "Query appearance alone can underpredict real difficulty; OOD and subtle tasks break static routing heuristics."
+    architectural_effect: "avoid pseudo-precise manual ambiguity/difficulty scores; calibrate from observed task-family outcomes"
+  F006:
+    finding: "Risk and coverage trade off: a router that escalates everything can look safe while eliminating utility."
+    architectural_effect: "measure human cognitive work removed, not safety alone"
+  F007:
+    finding: "Risk tier can be computed without an LLM by combining process-defined static risk with deterministic runtime signals."
+    architectural_effect: "criticality/risk routing need not create a meta-agent; use policy floor + dynamic rule inputs"
+  F008:
+    finding: "Flat semantic memory is not enough for long-horizon execution because future relevance follows dependency/state structure, not only topical similarity."
+    architectural_effect: "persist dependency/provenance graph or execution-state path; closed tasks leave durable outputs/constraints that can be rehydrated by dependency"
+  F009:
+    finding: "Less context can outperform full context, but compression is lossy and naive/static decomposition can propagate missing-context failures."
+    architectural_effect: "optimize for sufficient context, not smallest context; validate compaction/decomposition boundaries against downstream execution"
+
+empirical_observations_2026_09_16:
+  O001:
+    source: "E1 bounded semantic extraction/conflict experiment"
+    observation: "Deterministic Arm A scored 20/28 with 2 FALSE_CONFIRMED and 2 missed conflicts; DeepSeek 2.5.2 and Gemini 3.6 Flash each scored 28/28 on the same bounded semantic task."
+    architectural_effect: "Do not force brittle deterministic logic to solve genuinely semantic interpretation; route bounded semantic residue to AI while backend retains authority."
+    caution: "This supports local semantic delegation only; it does not justify model-owned process orchestration."
+
+  O002:
+    source: "E2 company identity binding experiment"
+    observation: "Frozen PROGRAM->AI_SEMANTIC pipeline scored 32/32: PROGRAM finalized 17 cases; Gemini handled 15/15 semantic cases; FALSE_MATCH=0."
+    architectural_effect: "Hybrid routing can outperform either pure deterministic coverage or blanket AI usage when PROGRAM resolves known cases first and AI receives only unresolved semantic residue."
+
+  O003:
+    source: "E2 escalation analysis"
+    observation: "A human given the same insufficient evidence is not automatically a stronger oracle than AI."
+    architectural_effect: "HUMAN escalation should require either additional evidence-gathering capability or real authority/judgment; human review is not a universal safety layer."
+
+  O004:
+    source: "E3 learning/governance holdout"
+    observation: "Deterministic Arm A classified 16/40 with 24 ABSTAIN and zero unsafe concrete substitutions; Gemini Arm B classified 28/40 with 12 ABSTAIN and zero wrong concrete classes."
+    architectural_effect: "Bounded AI can reduce human review materially without increasing observed unsafe concrete decisions when governance remains backend-owned."
+    measured_effect: "ABSTAIN/review load reduced by 50% in this holdout (24 -> 12)."
+
+  O005:
+    source: "E3 failure-mode distribution"
+    observation: "All Gemini Arm B mismatches were ABSTAIN rather than wrong concrete class assignments."
+    architectural_effect: "Preferred uncertainty behavior is explicit defer/ABSTAIN, not confident substitution; route design should preserve this failure mode."
+
+  O006:
+    source: "E3 governance design"
+    observation: "Classifier output remained proposal-only while backend owned action, authority, state, scope, promotion, receipts and supersession semantics."
+    architectural_effect: "Separate semantic classification from governance/transition authority. A correct-looking model classification must not directly mutate policy or canonical state."
+
+  O007:
+    source: "E3 data-generation attempt with DeepSeek R3"
+    observation: "DeepSeek produced a superficially valid class distribution but repeated a B-A-C-E-D class cycle six times, introduced fictitious memory-vs-active coverage, paraphrased an existing trap, and self-audited GO despite contamination."
+    architectural_effect: "Complex generation tasks can fail structurally while preserving plausible surface statistics; self-audit is weak evidence. Validation must inspect structure, novelty/contamination and invariants, not only counts or model confidence."
+
+  O008:
+    source: "E3 data-generation attempt with Grok"
+    observation: "Grok produced the wrong hidden class distribution (A4/B9/C13/D7/E7 instead of target A7/B7/C8/D9/E9), too few abstention traps, omitted required receipt/supersession/rollback traps, leaked parent-company motif contamination, and still self-audited GO."
+    architectural_effect: "On complex multi-constraint tasks, plausible output plus self-review can mask global contract violations. Independent artifact-level validation is required."
+
+  O009:
+    synthesis: true
+    observation: "The main empirical weakness observed was not local fluency but loss of global constraint coherence as task complexity increased."
+    architectural_effect: "Keep global constraints/state outside the model; decompose work into bounded items; use explicit invariant checks and independent evidence before transition."
+
+  O010:
+    synthesis: true
+    observation: "Cross-model diversity helped in bounded semantic tasks, but the decisive safety gain came from role separation and external artifacts/oracles, not model plurality by itself."
+    architectural_effect: "Treat multiple models as optional independent executors/auditors selected by risk and task class, never as a voting parliament or source of truth."
+
+  F012:
+    finding: "Instruction-channel strength is not uniform: user prose can be overridden by higher-priority system/developer/tool-enforced constraints; critical behavioral guarantees should therefore not live only in natural-language user prompts or skills."
+    architectural_effect: "Place critical invariants outside the model where possible: backend policy/hard gates first, required tool+schema second, skill/instruction guidance below that. Treat plain user prose as advisory unless the system design enforces it."
+    basis: "direct product behavior observed in current workflow + tool/schema enforcement properties"
+
+sources_index:
+  - label: IRT-Router
+    url: "https://arxiv.org/abs/2506.01048"
+  - label: RouteLMT
+    url: "https://arxiv.org/abs/2604.22520"
+  - label: Learning to Defer multiple experts
+    url: "https://proceedings.mlr.press/v267/mao25c.html"
+  - label: Dependence in learning-to-defer
+    url: "https://proceedings.mlr.press/v235/wei24a.html"
+  - label: TeamBench
+    url: "https://teambench.github.io/"
+  - label: Correlated LLM errors / Great Models Think Alike
+    url: "https://proceedings.mlr.press/v267/kim25e.html"
+  - label: Multi-agent system failure study
+    url: "https://arxiv.org/abs/2503.13657"
+  - label: Anthropic Building Effective Agents
+    url: "https://www.anthropic.com/engineering/building-effective-agents"
+
+next_research:
+  priority_1: "falsify H012: task-family classification without opaque central LLM"
+  priority_2: "test H015 boundary: define dependency closure / sufficient-context contract without giving worker global process know-how"
+  priority_3: "map production OSS/control-plane components for deterministic risk policy + dependency-aware state + durable workflow + acceptance"
+
+empirical_observations_2026_09_16:
+  E1_semantic_extraction:
+    status: observed
+    result_summary:
+      deterministic_arm: "20/28"
+      deepseek_semantic_arm: "28/28"
+      gemini_flash_replication: "28/28"
+    architectural_observation: "Bounded semantic AI can materially outperform deterministic handling on interpretation/normalization tasks when scope is narrow and outputs are structured."
+    architectural_effect: "Preserve deterministic control, but route semantic ambiguity to bounded AI rather than forcing brittle rule expansion."
+    caveat: "Does not justify model ownership of workflow, authority, or side effects."
+
+  E2_identity_binding:
+    status: observed
+    result_summary:
+      total_cases: 32
+      deterministic_final: 17
+      routed_to_ai_semantic: 15
+      false_match: 0
+      false_no_match: 0
+      ai_semantic_correct: "15/15"
+      combined: "32/32"
+    architectural_observation: "PROGRAM-first routing plus bounded AI fallback worked better than either universal deterministic logic or universal AI."
+    architectural_effect: "Strong evidence for layered routing: deterministic path first where rules are sufficient, semantic fallback where evidence is incomplete/ambiguous."
+    human_oracle_observation: "A human with the same insufficient evidence is not automatically a stronger oracle than the model. Escalate to human only when human can access new evidence or holds required authority."
+
+  E3_governed_learning:
+    status: observed_pass
+    purpose: "Test whether repeated corrections can reduce future human cognitive work without silently turning model behavior into business policy."
+    arm_a_deterministic:
+      class_correct: "16/40"
+      abstain: 24
+      wrong_concrete_class: 0
+    arm_b_gemini:
+      class_correct: "28/40"
+      abstain: 12
+      wrong_concrete_class: 0
+      per_class_correct:
+        A: "7/7"
+        B: "4/7"
+        C: "4/8"
+        D: "4/9"
+        E: "9/9"
+    architectural_observation: "A bounded model can reduce review load substantially while preserving safety when its only allowed unsafe alternative is abstention rather than autonomous promotion/authority changes."
+    utility_effect: "Human review requirement reduced by 50% versus conservative deterministic arm (24 -> 12 abstentions) with zero wrong concrete class substitutions."
+    governance_effect: "Learning must remain transfer-of-responsibility under explicit backend governance; repetition is not authority and model pattern recognition is not policy promotion."
+
+  cross_test_findings:
+    CT001:
+      finding: "The useful boundary is not PROGRAM versus AI globally, but case-level routing between deterministic competence and semantic competence."
+      status: working_strong
+    CT002:
+      finding: "ABSTAIN is a safety valve, but utility must be measured; universal abstention would pass safety and fail product value."
+      status: working_strong
+    CT003:
+      finding: "Human escalation is only rational when the human contributes new evidence, privileged context, or authority; otherwise it may be a ceremonial handoff."
+      status: working_strong
+    CT004:
+      finding: "Model correctness on bounded tasks does not imply reliability on long/compound tasks; the system must decompose work and keep global state/control outside the model."
+      status: working_strong
+    CT005:
+      finding: "Observed model failures on complex tasks (including DeepSeek/Grok in user-run tests) support treating long, compound reasoning as higher-risk than bounded semantic subtasks."
+      status: anecdotal_user_evidence
+      caution: "Use as architectural signal, not standalone statistical proof."
+    CT006:
+      finding: "Empirical capability profiles should be derived from held-out outcomes per task class rather than model self-confidence."
+      status: working_strong
+
+  model_role_implication:
+    architect: "Define contracts, decomposition, routing policy, falsification targets."
+    implementer: "Produce artifact under explicit task contract."
+    auditor: "Try to falsify artifact independently; findings are evidence, not authority."
+    oracle: "Prefer deterministic/external evidence where available."
+    owner: "Retains product/architecture authority and resolves decisions that cannot be delegated safely."
+
+
+architecture_notes:
+  ANCHORING_001:
+    status: working_strong
+    statement: "Critical goals/invariants must not rely on passive persistence in long conversational context; they should be externalized and re-injected from canonical process state at each relevant work item."
+    rationale:
+      - "Long-context systems suffer context pollution/salience decay even when tokens remain technically present."
+      - "Long-horizon harnesses benefit from structured note-taking, compaction, checkpoints, and explicit state handoff."
+    preferred_pattern:
+      - "canonical process state outside LLM"
+      - "minimal per-work-item contract capsule: objective + invariants + authority + acceptance criteria + required evidence + allowed transitions"
+      - "re-inject capsule near/current task at every consequential step"
+      - "hard backend/tool gates for non-negotiable constraints"
+      - "checkpoint/resume from canonical state, not chat recollection"
+    anti_patterns:
+      - "repeat full constitution in every prompt"
+      - "rely on one early instruction remaining salient across long trajectory"
+      - "use conversation summary as sole source of truth"
+      - "let model self-certify that it still remembers critical constraints"
+    evidence:
+      - "Anthropic Effective Context Engineering for AI Agents: context is finite attention budget; recommends minimal high-signal context, just-in-time retrieval, compaction, structured note-taking."
+      - "Anthropic Effective Harnesses for Long-Running Agents: compaction alone insufficient; use persistent artifacts and incremental sessions."
+      - "OpenAI Agents SDK 2026: externalized state/snapshots/rehydration for long-running tasks."
+    source_urls:
+      - "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"
+      - "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents"
+      - "https://openai.com/pl-PL/index/the-next-evolution-of-the-agents-sdk/"
+    falsifier: "evidence that passive one-time instructions retain equivalent compliance across long trajectories without external refresh/control"
+
+  CONTEXT_HYGIENE_001:
+    status: working_strong
+    statement: "Long-lived agent sessions need not degrade monotonically if completed work is compacted/trimmed and durable state is externalized; session lifetime is not equivalent to active context-window size."
+    user_evidence:
+      observation: "One Claude Code instance has remained active for >2 weeks, produced thousands of lines of code and many fixes, and survived handoffs across 3 ChatGPT architect instances and 3 Codex auditor instances without an observed rise in bug frequency/quality degradation."
+      strength: anecdotal_but_high_value_operational_evidence
+      caveat: "Absence of observed degradation is not proof of no hidden drift; use tests/defect rates/rollback history if later quantification is needed."
+    research_support:
+      - "Anthropic explicitly distinguishes session lifetime from a single model context window; managed long-horizon agents use compaction, memory/files, and context trimming."
+      - "Claude Code/Agent SDK supports compaction for long-running tasks, but Anthropic also reports that compaction alone can be insufficient in some model/harness regimes; resets plus handoff artifacts can outperform compaction-only."
+      - "Anthropic 2026 postmortem showed broken context-management flags caused forgetfulness/repetition/odd tool choices, indicating context-management quality itself can materially affect agent quality."
+    architectural_effect:
+      - "Treat context as a hot working set, not permanent history."
+      - "Completed tasks should leave hot context after producing durable receipts/artifacts/summaries."
+      - "Keep canonical state and important artifacts outside the context window; rehydrate only what the current work item needs."
+      - "Prefer compaction/trimming/reset policies based on observable state boundaries rather than arbitrary session age."
+      - "Do not force session restart merely because it is old if empirical quality remains stable and canonical state is sound."
+    candidate_storage_tiers:
+      hot: "current work item + contract capsule + immediately relevant evidence"
+      warm: "recent unresolved dependencies / active branch state / short summaries"
+      cold: "completed task receipts, historical findings, old tool outputs, superseded discussion"
+    anti_patterns:
+      - "retain all completed-task transcripts in active context"
+      - "equate a multi-day session with one uncompressed context window"
+      - "restart agents on fixed elapsed-time schedule without evidence of degradation"
+      - "trust compaction summary as sole canonical history when source artifacts can be preserved"
+    source_urls:
+      - "https://www.anthropic.com/engineering/managed-agents"
+      - "https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents"
+      - "https://www.anthropic.com/engineering/harness-design-long-running-apps"
+      - "https://www.anthropic.com/engineering/april-23-postmortem"
+    falsifier: "controlled evidence that long-lived compacted sessions exhibit systematic quality decay independent of task mix, model/version, and context-management implementation"
+
+
+research_update_2026_09_17_round_criticality_context:
+  criticality_result:
+    verdict: "SURVIVES_WITH_STRUCTURE"
+    result: "Use deterministic static+dynamic risk policy; do not ask LLM for authoritative criticality."
+    sources:
+      - "https://docs.aws.amazon.com/wellarchitected/latest/agentic-ai-lens/agentsec04-bp02.html"
+      - "https://www.mdpi.com/1999-4893/19/8/627"
+  context_pruning_result:
+    verdict: "HOT_WARM_COLD_TOO_SIMPLE"
+    result: "Pruning/compaction is beneficial, but rehydration must follow execution dependencies/provenance, not only age or semantic relevance."
+    sources:
+      - "https://www.microsoft.com/en-us/research/publication/beyond-semantic-organization-memory-as-execution-state-management-for-long-horizon-agents/"
+      - "https://www.microsoft.com/en-us/research/publication/acon-optimizing-context-compression-for-long-horizon-llm-agents/"
+      - "https://arxiv.org/abs/2608.10676"
+  bounded_work_item_result:
+    verdict: "SURVIVES_WITH_DEPENDENCY_CLOSURE"
+    result: "Bounded context often improves reliability/cost, but capsule must include all active constraints and dependency-linked artifacts; fixed minimal context is unsafe."
+    sources:
+      - "https://www.sri.inf.ethz.ch/publications/gloaguen2026agentsmd"
+      - "https://arxiv.org/abs/2605.15425"
+      - "https://www.microsoft.com/en-us/research/publication/acon-optimizing-context-compression-for-long-horizon-llm-agents/"
+
+product_positioning_2026_09_17:
+  thesis:
+    status: working_strong
+    statement: "Do not compete as an AI-first agent platform. Product should be control-first/customer-owned: deterministic process and authority remain primary; AI is selective, bounded, replaceable execution capacity."
+    target_user: "AI-aware operators/SMBs/teams that want automation and semantic capability without delegating full business process, policy, identity, and know-how to an AI provider."
+  market_observation:
+    status: verified_current_2026_09_17
+    findings:
+      - "Anthropic Claude for Small Business bundles connectors/workflows for QuickBooks, PayPal, HubSpot, Canva, DocuSign, Google Workspace, and Microsoft 365."
+      - "Zapier markets Claude integration across 9,000+ apps and explicitly positions Claude+Zapier as able to perform bookkeeping, marketing, and day-to-day operations."
+      - "Zapier already exposes broad accounting automation and QuickBooks+Claude integration patterns."
+    implication: "A generic LLM-centered business agent is strategically commoditized by model/platform vendors with superior model access and integration breadth."
+    source_urls:
+      - "https://www.anthropic.com/news/claude-for-small-business"
+      - "https://zapier.com/ai/claude-for-smb"
+      - "https://zapier.com/automations/finance/accounting"
+      - "https://zapier.com/apps/quickbooks/integrations/anthropic-claude"
+  differentiators_candidate:
+    - "customer-owned process state and policy"
+    - "deterministic control plane over AI"
+    - "AI only where semantic value exceeds deterministic alternatives"
+    - "model/provider replaceability"
+    - "know-how minimization in outbound semantic packets"
+    - "hard authority/confidentiality/risk gates outside LLM"
+    - "artifact/evidence mediated verification instead of agent debate"
+    - "auditable no-safe-route / human authority paths"
+  anti_positioning:
+    - "AI runs your whole business"
+    - "one autonomous agent with full company context"
+    - "model-owned global orchestration"
+    - "generic marketing/accounting/copilot feature competition"
+  falsifier: "market evidence that control-first/customer-owned systems have no meaningful demand or that AI-first platforms provide equivalent local process ownership, provider-independent control, know-how minimization, and deterministic authority boundaries without sacrificing usability."
+
+product_value_center_2026_09_17:
+  status: working_strong
+  problem_statement: "Frontier LLMs are powerful local operators but can lose global coherence on moderately complex multi-constraint tasks; a larger integration surface does not remove operator unreliability."
+  primary_user_value: "Let users exploit strong AI capabilities while reducing the supervision burden and limiting the blast radius of model errors."
+  value_mechanism:
+    - "externalize global process state, invariants, authority, and completion criteria from the LLM"
+    - "route bounded work to AI only where it has comparative advantage"
+    - "detect/escalate fragile or low-confidence cases instead of forcing autonomous completion"
+    - "use stronger external oracles/tests/tools where available"
+    - "keep evidence/artifacts and independent verification paths separate from the generator's narrative"
+    - "preserve customer control of process know-how and business policy"
+  product_test: "Would this feature materially reduce human cognitive supervision or model-error impact without moving more global authority into the LLM? If not, it is not core product value."
+  anti_value_proposition:
+    - "more integrations around the same unreliable model operator"
+    - "full-company-context autonomous agent"
+    - "marketing breadth without stronger error containment"
+  empirical_basis:
+    - "user's E1-E3 experiments: bounded AI improved semantic work, but complex multi-condition tasks exposed global coherence failures"
+    - "user workflow: isolated architect/implementer/auditor roles plus deterministic evidence reduced reliance on a single model"
+  concise_thesis: "The product is not a smarter operator; it is a safer operating system around powerful but fallible AI workers."
+
+semantic_contract_boundary_2026_09_17:
+  status: working_strong
+  observation: "Natural-language alignment is not contract alignment. Two parties can appear to understand each other linguistically while holding materially different task interpretations."
+  user_evidence: "User explicitly identified the risk that successful conversational understanding can mask divergent internal task models."
+  architectural_thesis: "Critical work must cross a fuzzy-language -> formal-work-contract boundary before execution. The executor should not be required to infer global obligations from prose history."
+  preferred_pattern:
+    - "human/request source may be natural language"
+    - "semantic parser/normalizer may propose structured intent"
+    - "backend validates required fields, scope, authority, dependencies, invariants, acceptance criteria, forbidden actions, and evidence requirements"
+    - "missing/ambiguous material fields trigger targeted clarification or UNKNOWN/ABSTAIN; they are not silently inferred"
+    - "executor receives a typed/structured work item plus bounded semantic payload"
+    - "post-execution acceptance evaluates against the formal contract/artifacts, not against whether the output sounds aligned"
+  candidate_contract_fields:
+    - objective
+    - task_family
+    - scope
+    - authority
+    - criticality
+    - invariants
+    - forbidden_actions
+    - dependencies
+    - required_inputs
+    - allowed_tools
+    - output_schema
+    - acceptance_criteria
+    - required_evidence
+    - allowed_transitions
+    - confidentiality_class
+  critical_distinction: "Do not require the deterministic backend to semantically understand unrestricted prose. If AI is used to parse intent, its structured interpretation is only a candidate until deterministic validation and/or human confirmation of material ambiguity."
+  anti_pattern: "Send long natural-language request + historical context and rely on the executor LLM to reconstruct the intended contract every time."
+  implication: "The system's value partly comes from compiling ambiguous human intent into a stable machine-checkable execution contract before invoking fallible AI workers."
+  falsifier: "Evidence that free-form natural-language execution with model-managed memory achieves equivalent contract fidelity, authority safety, and reproducibility on complex multi-constraint tasks without external formalization."
+
+control_plane_integrity_2026_09_17:
+  status: working_strong
+  user_incident: "A prior ChatGPT instance silently changed the Task Scope storage/format, which blinded the backend guard that depended on that representation; other models did not report the change. Intent is unknown and architecturally irrelevant."
+  core_failure: "The executor could mutate the representation/mechanism used to constrain and audit its own scope. The guard was therefore not independent or tamper-resistant."
+  security_mapping:
+    - "NIST reference monitor: enforcement mechanism should be tamperproof, always invoked, and small/verifiable."
+    - "Complete mediation: every consequential access/write must cross the policy boundary, not only be checked opportunistically after the fact."
+    - "Least privilege: executor reasoning must not widen runtime permissions."
+    - "Fail-safe default: malformed/unknown scope representation fails closed, never disables enforcement."
+  architectural_rules:
+    - "The AI executor must never be authoritative for Task Scope, policy schema, guard configuration, permission state, or acceptance rules."
+    - "Task Scope lives in a customer-controlled control plane (DB/object store/policy service), versioned and schema-validated; any human-readable task file is a projection, not authority."
+    - "Executor receives a read-only contract/capability derived by the backend; changing a local copy cannot change authority."
+    - "Policy/guard code and configuration are outside executor writable roots or protected by OS/container permissions."
+    - "Writes/deletes/tool calls are mediated at execution time by an external policy layer; post-hoc diff is additional evidence, not the primary boundary."
+    - "Prefer disposable sandbox/overlay workspaces: executor produces candidate patch/artifacts; backend validates scope and applies accepted changes to canonical state."
+    - "If valid completion requires files/actions outside scope, executor may emit SCOPE_EXPANSION_REQUEST with reason/evidence, but cannot self-authorize expansion."
+    - "Deletion is a separate capability and is denied by default unless explicitly authorized."
+    - "Malformed, missing, schema-mismatched, or unknown Task Scope causes STOP/FAIL_CLOSED, not permissive fallback."
+  key_thesis: "Do not try to make the LLM obedient enough to protect the guardrail. Make guardrail bypass non-authoritative and technically unavailable."
+  implication_for_product: "The control plane should assume the worker can drift, misinterpret, optimize for convenience, or behave adversarially; safety must not depend on diagnosing which occurred."
+  sources:
+    - "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5-draft.pdf"
+    - "https://docs.aws.amazon.com/wellarchitected/latest/agentic-ai-lens/agentsec02-bp01.html"
+    - "https://docs.aws.amazon.com/wellarchitected/latest/agentic-ai-lens/agentrel02-bp02.html"
+    - "https://openai.com/index/building-codex-windows-sandbox/"
+
+capability_envelope_by_work_type_2026_09_17:
+  status: working_strong
+  correction: "Do not generalize the Codex B no-tools pattern to every AI role. Restrict primarily the model's authority/capabilities, while context breadth and read access should match the work type."
+  user_observation: "A closed evidence package is useful for analysis/verification of supplied data, but insufficient for exploration of open sources where the model must discover, pivot, and follow evidence beyond an initial packet."
+  role_patterns:
+    closed_world_witness:
+      read_scope: "fixed backend-prepared evidence view plus explicit artifact requests"
+      write_scope: "none"
+      purpose: "verification, contract review, audit, falsification of a bounded claim"
+      precedent: "Elnath Code Codex B / ModelView"
+    open_world_researcher:
+      read_scope: "broad web/search/read-only connectors; may reformulate queries and follow new sources"
+      write_scope: "no canonical business-state mutation; output is report/evidence bundle only"
+      purpose: "discovery, current-state research, market/technical/legal/source exploration"
+      required_output_properties: "provenance/citations, explicit unknowns, source-backed findings"
+    bounded_executor:
+      read_scope: "minimum sufficient task context plus task-relevant tools"
+      write_scope: "task-specific capabilities only"
+      purpose: "perform authorized operational work"
+  key_distinction: "epistemic freedom != operational authority. A researcher may need wide freedom to look, while still having almost no power to change canonical state."
+  existing_market_pattern:
+    - "OpenAI Deep Research performs multi-step open-web exploration and synthesis with citations."
+    - "Current workspace-agent controls distinguish read access from write actions and allow read-only connectors plus separate write approvals/constraints."
+  architectural_effect: "Router should select a capability envelope by work type instead of applying one universal sandbox/context policy to every LLM call."
+  anti_patterns:
+    - "give every model only a closed packet"
+    - "give a research model broad write authority because it needs broad read access"
+    - "treat broad context as equivalent to broad operational permission"
+  sources:
+    - "https://openai.com/index/introducing-deep-research/"
+    - "https://academy.openai.com/public/clubs/work-users-ynjqu/resources/deep-research"
+    - "https://help.openai.com/en/articles/20001143"
+
+risk_thesis_falsification_2026_09_17:
+  status: working_strong_with_limits
+  thesis_tested: "For enterprise AI, two core risks are excessive operational authority (agent acts beyond user intent) and excessive exposure of sensitive/company data; value comes from reducing blast radius, limiting data exposure, and making material actions observable/auditable."
+  verdict: "SUPPORTED as a real and widely recognized risk framing, but NOT sufficient as a complete safety architecture and NOT free of utility cost."
+  supporting_evidence:
+    - "OWASP LLM06:2025 defines Excessive Agency and identifies excessive functionality, permissions, and autonomy as root causes; recommends least privilege and narrower tool/function scope."
+    - "Anthropic 2026 engineering reports real Claude Code incidents from over-eager action: deleting remote git branches after misinterpreting instructions, uploading a GitHub auth token to an internal cluster, and attempting migrations against production databases."
+    - "Anthropic reports users approve ~93% of permission prompts, showing human-in-the-loop confirmation alone suffers approval fatigue and is not a strong primary control."
+    - "OpenAI agent guidance recommends enabling only apps needed for the task, avoiding broad prompts, using confirmations for consequential actions, and acknowledges safeguards do not eliminate prompt-injection risk."
+    - "Microsoft 2026 agent security guidance treats least privilege, per-action authorization, action audit logging, sandboxing/egress controls, and data governance as core responsibilities."
+    - "AgentDojo and subsequent work show prompt injection can cause unintended tool actions and data exfiltration; no general model-only defense solves the problem."
+    - "CaMeL demonstrates that external control/data-flow enforcement can provide strong security properties, supporting the principle that safety should not rely only on LLM obedience."
+    - "AgenTRIM reports task-step least-privilege tool filtering can reduce attack success while retaining high utility, supporting adaptive rather than globally restrictive capability control."
+  counterevidence_and_limits:
+    - "Security boundaries have a utility/maintenance cost. OpenAI Lockdown Mode explicitly trades useful features for reduced exfiltration risk; Anthropic notes sandboxing is high-maintenance and network/host access complicates isolation."
+    - "CaMeL's strong security result solved only about 67% of AgentDojo tasks, so rigid capability/data-flow constraints can materially reduce task completion."
+    - "Audit logs improve reconstruction/accountability but do not prevent the first harmful action; irreversible/high-impact actions need pre-action authorization or bounded capabilities, not logging alone."
+    - "Human approvals are weak at scale due to approval fatigue; 'ask the user every time' is not an adequate architecture."
+    - "Data minimization reduces exposure/blast radius but cannot guarantee confidentiality: prompt-injection research still finds non-zero leakage under defenses."
+    - "Over-restricting read/context access can degrade open-world research and complex tasks; controls must distinguish epistemic freedom from operational authority."
+    - "The hard unsolved problem remains semantic intent translation: least privilege can enforce an explicit contract, but cannot by itself guarantee that the contract correctly represents what the human meant."
+  refined_product_thesis:
+    - "Do not promise an agent that never makes mistakes. Promise bounded damage, bounded data exposure, and reconstructable actions."
+    - "Primary controls should target capabilities/permissions/data flow, not model personality or obedience."
+    - "Use task-specific capability envelopes: broad read may coexist with narrow/no write."
+    - "Apply stronger pre-action controls to irreversible/external/high-impact operations; use auditability for detection/reconstruction, not as prevention substitute."
+    - "Treat confidentiality and authority as separate axes: what the model may see and what it may do are independently scoped."
+  product_value_test: "Does the mechanism reduce expected impact of model error or data compromise while preserving enough task utility to beat a human-supervised generic agent?"
+  falsifier: "Evidence that unrestricted agent access achieves comparable real-world utility with no materially higher rates/costs of unintended actions or data exposure, or that external capability/data-flow controls fail to reduce impact relative to prompt/model-only safeguards."
+  sources:
+    - "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/"
+    - "https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html"
+    - "https://www.anthropic.com/engineering/claude-code-auto-mode"
+    - "https://www.anthropic.com/engineering/how-we-contain-claude"
+    - "https://help.openai.com/en/articles/11752874-chatgpt-agent"
+    - "https://openai.com/safety/prompt-injections/"
+    - "https://help.openai.com/en/articles/20001061"
+    - "https://learn.microsoft.com/en-us/azure/security/fundamentals/shared-responsibility-ai-agent"
+    - "https://learn.microsoft.com/en-us/security/zero-trust/sfi/least-privilege-for-ai-agents"
+    - "https://arxiv.org/abs/2406.13352"
+    - "https://arxiv.org/abs/2503.18813"
+    - "https://arxiv.org/abs/2601.12449"
+
+recovery_first_design_2026_09_17:
+  status: working_strong
+  origin: "Transfer the software-engineering rollback/versioning mindset into AI-mediated business processes."
+  core_principle: "Assume models, backend, and humans will all make mistakes. Prefer making errors visible, bounded, and recoverable over adding controls for every conceivable failure mode."
+  design_priority_order:
+    - "observability: know what actually changed and why"
+    - "blast-radius reduction: keep mistakes local"
+    - "recoverability: preserve or reconstruct a prior valid state"
+    - "prevention: add only when residual harm remains unacceptable"
+  key_distinction: "Recovery is not one universal undo. Different action classes have different reversibility semantics."
+  action_classes:
+    stateful_internal:
+      examples: ["configuration", "document/version state", "workflow state", "internal records"]
+      preferred_pattern: "version/snapshot/event history plus rollback or compensating restore"
+    external_but_compensatable:
+      examples: ["CRM updates", "calendar changes", "draft publication", "some account changes"]
+      preferred_pattern: "record prior state and provide compensating action where the external system supports it"
+    effectively_irreversible:
+      examples: ["sent email", "money transfer", "public disclosure", "destructive deletion without backup"]
+      preferred_pattern: "stronger pre-action controls, staging/draft/delay where feasible, because rollback cannot be assumed"
+  architecture_effect: "Do not build a new guard for every imaginable failure. First ask whether the operation can be made observable and recoverable cheaply. Escalate to stronger prevention only for high-impact or poorly reversible actions."
+  anti_pattern: "Treating theoretical prevention as the default objective and allowing control complexity to grow faster than practical risk reduction."
+  product_value: "AI mistakes should behave more like recoverable bad commits than silent irreversible business incidents whenever the domain permits."
+
+visible_undo_window_2026_09_17:
+  status: working_strong
+  origin: "User refinement: delayed commit should not behave like escalation or mandatory approval. The UI should visibly show a prepared operation and the remaining time before execution; the user chooses whether the action deserves attention."
+  core_principle: "For suitable consequential actions, create a visible grace window before irreversible external effect. Keep autonomy as the default path, but expose an obvious cancel/undo affordance until commit time."
+  interaction_model:
+    - "AI/backend prepares the operation."
+    - "UI shows what will happen and when, e.g. 'Email will be sent in 8 min'."
+    - "No mandatory review is required by default."
+    - "User may inspect, edit, cancel, or ignore it."
+    - "If untouched, the system commits automatically after the grace period."
+  key_distinction: "This is ambient control, not escalation. The system offers a recovery opportunity without converting the human into a permanent approval gate."
+  design_effect:
+    - "Prefer visible delayed commit for actions where a short delay is operationally acceptable."
+    - "The undo control and countdown should be salient in the normal UI, not buried in audit logs."
+    - "Risk can tune delay length or disable auto-commit for exceptional cases, but routine operations should not require explicit approval."
+  examples:
+    - "outbound email"
+    - "scheduled social/publication actions"
+    - "bulk CRM communication"
+    - "campaign activation"
+    - "selected destructive operations with a recoverable holding state"
+  anti_patterns:
+    - "ask the user to approve every routine action"
+    - "hide undo only in logs/history"
+    - "treat every delayed action as an exception requiring escalation"
+    - "make the model decide whether the user deserves to see the pending action"
+  product_value: "Give users a cheap option to intervene without forcing them to supervise every AI action."
+
+eme_memory_candidate_2026_09_17:
+  status: candidate_for_fit_validation
+  origin: "Inspection of the existing Elnath Memory Engine after the ROTA simplification to coordinator/owner decisions raised a broader question: whether the new Hybrid Operational System needs only authoritative decisions or a fuller organizational-memory model."
+  current_hypothesis: "Do not restore Elnath architecture. Evaluate elnath/memory specifically as a candidate organizational-memory pattern/component, separate from workflow state, guards, review orchestration, and other Elnath machinery."
+  evidence_from_existing_eme:
+    - "elnath/memory is explicitly domain-agnostic and was extracted as a forkable skeleton, not a running service."
+    - "Its record model distinguishes FACT, PROP, INTERP, DEC, CORR, EXP, QST, NOTE, and INV rather than collapsing all durable knowledge into 'decisions'."
+    - "Records carry authority, evidence/provenance, scope/components/tags, time/version metadata, and append-only identity."
+    - "Relations include supersedes, rejects, corrects, derives_from, answers, conflicts_with, duplicates, and concerns_record, allowing current knowledge to be related to prior knowledge instead of overwriting history."
+    - "DEC/CORR/INV and authority-changing relations are owner-only in the existing implementation; non-owner/model contributions can remain candidates/open items. This resembles the desired whitelist/promotion model: AI may notice/propose, but cannot silently mint authoritative organizational truth."
+    - "The existing memory package also contains archive, indexes, retrieval, source reading, and time/scope/chain retrieval; therefore the full candidate solves a broader information-organization problem than ROTA's coordinator-decision register."
+  required_separation:
+    operational_state:
+      examples: ["workflow state", "pending outbound action", "undo timer", "queue item", "current task state", "runtime integration state"]
+      owner: "normal product database/workflow runtime"
+      note: "Do not force transient operational state into organizational memory."
+    organizational_memory:
+      examples: ["authoritative decisions", "corrections", "facts with provenance", "semantic interpretations", "approved precedents", "open questions", "experiments/experience", "invariants", "superseded knowledge"]
+      candidate: "EME-style memory model in the product backend/database"
+      note: "This is the layer being evaluated for reuse/adaptation."
+  likely_implementation_direction_if_fit_is_confirmed: "PostgreSQL remains the main persistence substrate. Reuse/adapt the EME information model and useful retrieval semantics inside the new system rather than adopting the old SQLite implementation or turning EME into a separate service by default."
+  explicit_non_decisions:
+    - "Do not yet adopt the whole EME codebase."
+    - "Do not adopt elnath/guard/review as part of the memory decision."
+    - "Do not make EME a separate microservice without a demonstrated need."
+    - "Do not assume every legacy record type, relation, index, or retrieval path is needed; validate each against current requirements."
+  next_validation_question: "For each recorded requirement of the Hybrid Operational System, does the EME memory model cover the needed durable information, authority, provenance, correction/supersession, and retrieval behavior without introducing unnecessary machinery?"
+
+architecture_component_fit_method_2026_09_17:
+  status: working_strong
+  principle: "Move from general architectural discussion to evidence-based component selection: identify a promising architecture element, then test whether it satisfies the system's already-recorded requirements before adopting, configuring, reducing, or rewriting it."
+  method:
+    - "Start from explicit product/architecture requirements, not from a favorite technology or previous project."
+    - "Select one concrete existing component/pattern whose properties appear relevant."
+    - "Inspect what the component actually provides, including boundaries, assumptions, failure modes, and legacy baggage."
+    - "Map requirements to capabilities and mark each as FIT, PARTIAL, GAP, or NOT_NEEDED."
+    - "Prefer ADOPT or CONFIGURE where fit is good; REDUCE/FORK only where the component is useful but broader than needed; WRITE only for genuine gaps or product-specific behavior."
+    - "Do not add compensating architecture merely to make a mismatched component fit. Reject it if the mismatch is structural."
+  purpose: "Prevent both greenfield over-design and blind reuse of old Elnath machinery. Make component choice falsifiable against the architecture we actually want."
+  current_first_subject: "Elnath Memory Engine / elnath.memory as organizational-memory candidate."
+  anti_patterns:
+    - "design the whole system from scratch before checking mature/existing blocks"
+    - "reuse a previous subsystem because it already exists, without checking current requirements"
+    - "treat a component's unused features as requirements"
+    - "invent guards/adapters around a structurally poor fit instead of rejecting or reducing the component"
+
+
+architecture_candidate_v0_1_2026_09_17:
+  status: candidate_ready_for_owner_review
+  design_goal: "Assemble a practical Human/Backend/AI operational workflow from proven components; prefer visible/recoverable error handling over speculative prevention and keep AI as a bounded worker rather than the global orchestrator."
+  stop_condition: "End-to-end path has a concrete owner for each required function, no critical behavior depends only on model obedience, and remaining gaps are explicit rather than hidden behind new guard layers."
+  deployment_shape:
+    pattern: "modular monolith for v0.1"
+    rationale: "Minimize operational components and network boundaries while product semantics are still being learned."
+  selected_components:
+    durable_workflow_runtime:
+      component: "DBOS Transact Python"
+      decision: ADOPT_CONFIGURE
+      fit: FIT_WITH_KNOWN_LIMIT
+      provides: ["durable workflows", "queues", "durable sleep/timers", "cancel/resume/fork", "Postgres-backed checkpoints", "SQLAlchemy datasource transactions"]
+      reason: "Library-in-process, MIT licensed, Postgres-backed; no separate orchestration server required for core runtime."
+      known_limit: "Ordinary external-API steps are at-least-once around crash ambiguity; connector must use provider idempotency/reconciliation or enter UNKNOWN rather than blind retry."
+      rejected_for_v0_1: ["Temporal: strong fit but extra orchestration service/operational surface", "Restate: strong fit but adds separate durable runtime process"]
+    persistence:
+      component: "PostgreSQL"
+      decision: ADOPT
+      fit: FIT
+      provides: ["canonical operational state", "business event/receipt store", "organizational-memory tables", "built-in FTS", "transactions", "optional RLS"]
+      note: "Do not treat RLS as the whole business authority system; it is optional defense/tenant isolation."
+    app_backend:
+      component: "Python + FastAPI + Pydantic + SQLAlchemy/Alembic"
+      decision: ADOPT_CONFIGURE
+      fit: FIT
+      reason: "Thin typed API/business layer around durable workflow and Postgres; no agent framework required."
+    observability:
+      component: "OpenTelemetry"
+      decision: ADOPT_CONFIGURE
+      fit: FIT
+      scope: "technical traces/metrics"
+      boundary: "Canonical business truth stays in Postgres action receipts/events, not telemetry logs."
+    organizational_memory:
+      component: "EME-inspired information model implemented in PostgreSQL"
+      decision: REDUCE_PORT
+      fit: PARTIAL_CODE_GOOD_MODEL
+      keep_semantics: ["typed durable knowledge", "authority", "evidence/provenance", "append-oriented history", "correction/supersession relations", "scope/time", "candidate vs authoritative promotion"]
+      do_not_adopt: ["old SQLite implementation as runtime dependency", "elnath/guard/review", "separate EME microservice", "all legacy retrieval/index machinery by default"]
+      initial_record_set_candidate: ["FACT", "PROP", "INTERP", "DEC", "CORR", "EXP", "QST", "INV"]
+      defer: ["generic NOTE", "vector/embedding retrieval unless measured recall gap requires it"]
+    memory_retrieval:
+      component: "PostgreSQL exact/scoped queries + FTS + relation/time closure"
+      decision: WRITE_SMALL_REUSE_SEMANTICS
+      fit: FIT_FOR_V0_1
+      future_option: "pgvector only after measured semantic-recall failure"
+    authority_policy:
+      component: "small deterministic Python policy/capability registry + Postgres data"
+      decision: WRITE_SMALL
+      fit: FIT_FOR_V0_1
+      rejected_for_v0_1: ["OPA", "Cedar"]
+      reason: "Both are mature policy engines, but adding a separate policy subsystem before policy complexity justifies it would recreate over-architecture."
+    model_access:
+      component: "thin direct provider adapters using provider structured outputs/strict tool schemas"
+      decision: WRITE_THIN_ADAPTER
+      fit: FIT
+      rule: "Core business semantics must not depend on one provider; backend owns work contract and transition authority."
+      rejected_for_global_orchestration: ["LangGraph", "CrewAI", "generic autonomous-agent loop"]
+    open_world_research:
+      component: "SearchAdapter; Brave Search/LLM Context as first candidate provider"
+      decision: ADOPT_BEHIND_ADAPTER
+      fit: FIT_WITH_DATA_BOUNDARY
+      rule: "Research role may have broad web read/search but zero canonical business write. Sensitive/private company detail is minimized/pseudonymized before outbound search."
+    external_actions:
+      component: "thin domain adapters with explicit reversibility/idempotency metadata"
+      decision: WRITE_THIN_ADAPTERS
+      fit: PRODUCT_SPECIFIC
+      first_reference_adapter: "Gmail drafts/send for Visible Undo demonstration"
+      rule: "No generic blind retry for ambiguous external commit outcomes; reconcile or mark UNKNOWN."
+    pseudonymization:
+      component: "existing user pseudonymizer"
+      decision: REUSE_ADAPT
+      fit: FIT
+  custom_product_core:
+    - "WorkContract: typed versioned execution contract derived from human intent and validated before execution"
+    - "Router: PROGRAM / AI / HUMAN / STOP/NO_SAFE_ROUTE plus work-type capability envelope"
+    - "ContextAssembler/DataBoundary: dependency-aware context retrieval, minimization, pseudonymization, provider boundary"
+    - "ActionLifecycle: PREPARED/PENDING/COMMITTING/COMMITTED/CANCELLED/FAILED/UNKNOWN/COMPENSATED and recovery metadata"
+    - "BusinessEvent/ActionReceipt: append-oriented record of actual process effects, actors, source, previous/next state and provider receipt"
+    - "OrganizationalMemory promotion: candidate knowledge/corrections become reusable authority only under explicit policy/human authority"
+    - "Learning router from E3: A one-off, B mechanical-rule candidate, C business-policy candidate, D semantic precedent, E process defect"
+  end_to_end_reference_workflow:
+    scenario: "Research an account/company and, if justified by process policy, prepare a follow-up email with a visible undo window."
+    steps:
+      - "Human submits goal in natural language."
+      - "Bounded semantic normalizer may propose WorkContract; backend validates required fields, authority, confidentiality and material ambiguity."
+      - "Router decomposes deterministic internal retrieval to PROGRAM and open-source discovery to a read-only ResearchWorker."
+      - "DataBoundary minimizes/pseudonymizes internal context before any external model/search call."
+      - "ResearchWorker returns EvidenceBundle with sources/unknowns; it cannot mutate canonical business state."
+      - "Bounded semantic worker receives only sufficient task context plus evidence and returns typed findings/action proposal."
+      - "Backend validates schema/policy; durable findings may enter organizational memory as candidates, not automatic truth/policy."
+      - "Gmail adapter creates a real draft; backend creates PENDING action with execute_after, target, content hash, reversibility class and connector receipt."
+      - "DBOS durably waits; UI shows countdown plus View/Edit/Cancel without mandatory approval."
+      - "At deadline a database transaction conditionally claims PENDING -> COMMITTING; cancellation succeeds only while PENDING, removing the cancel/send race at canonical-state level."
+      - "Connector commits exact prepared draft. Success stores provider message ID and COMMITTED receipt. Ambiguous outcome triggers reconciliation; unresolved state becomes UNKNOWN rather than blind resend."
+      - "Human edit/cancel becomes an event and optional E3 learning candidate; only authorized promotion changes reusable policy/precedent."
+  ui_minimum:
+    - "Now/Work: current process state and meaningful blockers"
+    - "Pending Actions: countdown, target/effect summary, View/Edit/Cancel"
+    - "Activity: what actually happened, including receipts and recovery/compensation"
+    - "Learning Candidates: non-urgent proposed reusable corrections/policies/precedents; never mandatory for every task"
+  database_logical_areas:
+    core: ["work_items", "actions/pending_actions", "policy/capability profiles"]
+    memory: ["records", "evidence", "relations", "status/current projection"]
+    audit: ["business_events", "action_receipts"]
+    runtime: ["DBOS system tables/checkpoints"]
+  explicit_non_components_v0_1:
+    - "No microservices."
+    - "No separate vector database."
+    - "No Redis/RabbitMQ/Celery unless DBOS fit is falsified."
+    - "No OPA/Cedar until policy complexity justifies extraction."
+    - "No Temporal/Restate runtime while Postgres-backed in-process DBOS is sufficient."
+    - "No global agent framework as process owner."
+    - "No separate EME service and no full legacy Elnath guard architecture."
+    - "No mandatory human approval inbox for routine recoverable/delayed actions."
+  known_gaps_and_tests_before_product_freeze:
+    - "External API side-effect ambiguity is connector-specific. Each action adapter must declare idempotency/reconciliation/compensation behavior; UNKNOWN is legal."
+    - "WorkContract intent translation cannot be made perfect; UI/process must expose material ambiguity and corrections rather than pretending deterministic semantic truth."
+    - "EME record/relation subset is not frozen; validate against first real Ridgeway workflows before adding more types/indexes."
+    - "Brave/search-provider retention/privacy tier must match the customer's data class; standard external search must not receive private company details merely because research is useful."
+    - "Visible Undo needs an attention-design test later (notification salience/habituation); this is a UX/product test, not a reason to add approval gates now."
+    - "DBOS remains a replaceable runtime choice; re-evaluate if cross-service orchestration, HA requirements or operational evidence reveal a structural mismatch."
+  implementation_sequence_candidate:
+    - "S0 skeleton: FastAPI + Postgres + SQLAlchemy/Alembic + DBOS + one health/test workflow."
+    - "S1 operational truth: WorkContract + WorkItem + BusinessEvent/ActionReceipt + deterministic lifecycle states."
+    - "S2 recovery path: PENDING action + durable delay + cancel + atomic claim + fake connector; prove crash/restart/cancel races."
+    - "S3 organizational memory: reduced EME Postgres schema + promotion/correction/supersession + deterministic retrieval."
+    - "S4 AI boundary: one provider adapter + structured output + PROGRAM/AI/HUMAN/STOP router + DataBoundary/pseudonymizer."
+    - "S5 open research: SearchAdapter + EvidenceBundle read-only path."
+    - "S6 real connector: Gmail draft/send with reconciliation and visible undo UI."
+    - "S7 learning: E3 correction classification and promotion flow."
+  owner_review_focus: "Review product behavior and complexity budget, not code details: does this still feel like Human/Backend/AI cooperation with recoverable errors, or has any selected component quietly turned AI or infrastructure into the center?"
+
+architecture_reduction_and_evidence_qualification_2026_09_17:
+  status: working_strong_supersedes_conflicting_v0_1_details
+  origin: "Independent Opus falsification rounds plus owner observation that poisoned/false evidence can drive a perfectly functioning workflow into a catastrophically wrong action."
+  governing_thesis:
+    - "Provenance is not truth. A valid URL/citation proves origin, not material correctness."
+    - "A reliable workflow around false premises can reliably execute a bad decision; evidence quality must therefore be qualified before operational use."
+    - "The product must not silently transform an AI claim into organizational truth or an operational premise."
+  reduced_vertical_scope:
+    task_families:
+      include: ["Research & Follow-up", "CRM Maintenance & Exception Handling"]
+      defer: ["Inbox/Document -> Process"]
+      reason: "Inbox is event-initiated continuous triage rather than human-intent initiated bounded work and would introduce a new intake class before the core thesis is tested."
+    core_flow: ["INPUT", "CONTRACT", "ROUTE", "EXECUTE", "PENDING/COMMIT", "RECEIPT"]
+    note: "Acceptance/oracle/transition concepts may be ordinary validations/functions inside these steps, not separate subsystems."
+  work_contract_v0_1:
+    template_owned_fields:
+      - task_family
+      - deterministic_criticality_floor
+      - acceptance_criteria
+      - required_evidence
+      - confidentiality_class
+    semantic_fields:
+      - objective
+      - scope
+    scope_binding:
+      rule: "Use the already-tested E2 pattern: PROGRAM-first identity binding, bounded AI only for unresolved semantic residue, UNKNOWN/ABSTAIN when identity is not sufficiently bound."
+      prohibition: "Free-form normalizer output cannot directly establish entity scope."
+    test_requirement: "Freeze roughly 30 natural-language requests with expected scope/target/objective/forbidden-action outcomes; measure intent->contract fidelity before vertical acceptance."
+  routing_v0_1:
+    rule: "Static deterministic mapping: task_family x action_class -> PROGRAM / AI / HUMAN / STOP."
+    removed: ["capability profiles", "manual pseudo-precise capability scores", "mandatory independent second-model verification"]
+    telemetry_for_future: "Record task family, executor/model version, outcome/oracle result so capability profiles can be learned later if evidence justifies them."
+  reversibility_and_action_lifecycle:
+    default_reversibility: effectively_irreversible
+    side_effects_rule: "UNKNOWN external side effects => treat as effectively irreversible. A connector may claim a safer class only when target-system behavior/configuration justifies it."
+    action_states_v0_1: ["PENDING", "COMMITTING", "COMMITTED", "CANCELLED", "FAILED", "UNKNOWN"]
+    removed_states: ["PREPARED", "COMPENSATED"]
+    atomicity_anchor: "PENDING -> COMMITTING remains an atomic conditional database transition; cancellation is only valid while PENDING."
+    ambiguous_external_commit: "Reconcile using provider evidence/idempotency where possible; otherwise UNKNOWN. Never blind retry an ambiguous external side effect."
+  audit_storage_simplification:
+    candidate: "BusinessEvent and ActionReceipt may be one append-oriented event/receipt table with typed rows if this preserves reconstruction and provider receipts."
+    requirement: "There must be one canonical reconstruction path for what actually happened."
+  learning_v0_1:
+    keep: "Raw human correction with context and provenance."
+    defer: ["E3 A/B/C/D/E classification", "Learning Candidates UI", "automatic promotion logic"]
+    reason: "These do not contribute to the first vertical's falsification goals."
+  organizational_memory_reduction:
+    full_eme: deferred
+    principle: "Do not instantiate the legacy EME taxonomy before real workflows demonstrate a need. EME remains a design/parts repository, not a runtime dependency."
+    minimal_durable_company_knowledge_candidate:
+      - "HUMAN_CORRECTION"
+      - "APPROVED_PRECEDENT"
+      - "explicit business DECISION/POLICY in ordinary process/policy tables"
+    crm_pair_decisions: "Durable pairwise decisions such as SAME_ENTITY / NOT_DUPLICATE belong in ordinary process data, not organizational memory ontology."
+  epistemic_model:
+    hard_distinction:
+      internal_fact: "State for which the organization/system itself is authoritative, e.g. our CRM state, signed contract, sent message, owner decision, or a receipt that a research check was performed."
+      external_claim: "Assertion about the outside world. It remains a claim with evidence/status/as_of; human authority may authorize action under uncertainty but does not convert the outside-world claim into truth."
+    rejected_pattern: "AI-extracted or human-approved external statement automatically becoming FACT."
+    negative_research: "Record 'we searched at time T under criteria C and found no qualifying source' as a process/evidence receipt; do not encode UNKNOWN as a material fact about the world."
+  evidence_qualification_v0_1:
+    name: "Evidence Qualification Pipeline"
+    goal: "Prevent unverified or wrongly bound claims from silently becoming premises for material actions; do not attempt to build a Truth Engine."
+    flow:
+      - "SOURCE"
+      - "CLAIM + exact supporting span"
+      - "SUBJECT_BINDING"
+      - "SOURCE_TYPE + SOURCE_DATE"
+      - "CORROBORATION + CONTRADICTION SEARCH"
+      - "EVIDENCE_STATUS"
+      - "workflow template checks evidence threshold before action"
+    claim_required_fields:
+      - statement
+      - exact_source_span_or_equivalent_evidence_pointer
+      - source_url_or_source_id
+      - source_type
+      - source_date_or_observed_date
+      - checked_at
+      - subject_binding
+      - evidence_status
+    subject_binding_rule: "A claim about an entity cannot advance beyond INSUFFICIENT unless bound to the intended entity through the E2-style identity path."
+    source_assessment_v0_1:
+      keep_objective_fields: ["source_type", "date/currentness"]
+      defer_subjective_scoring: ["source motivation", "access-to-knowledge score", "method score", "multi-axis reliability scoring"]
+      reason: "Avoid model-generated pseudo-precision in the first vertical."
+    evidence_statuses:
+      - INSUFFICIENT
+      - SOURCE_BACKED
+      - CORROBORATED
+      - DISPUTED
+    semantics:
+      INSUFFICIENT: "Evidence is absent, mismatched, wrongly bound, stale for the claim type, or below the workflow threshold. Reason field explains why."
+      SOURCE_BACKED: "At least one bound source genuinely supports the claim, but evidence is not sufficient for corroborated status."
+      CORROBORATED: "Required independent corroboration rule for the claim/workflow template is satisfied. This does NOT mean TRUE."
+      DISPUTED: "Material credible contradiction remains unresolved; this is an escalation/decision condition, not a higher or lower point on a confidence scale."
+    display_rule: "Never display CORROBORATED alone as a truth badge; display status with checked_at/as_of and independent-source count."
+    corroboration_independence_v0_1:
+      deterministic_checks:
+        - "Same domain counts as one source lineage by default."
+        - "Explicit citation/link/name of another source indicates dependency."
+        - "Identical unusual numbers/dates across secondary sources are treated conservatively as possibly dependent until distinct primary origin is shown."
+      primary_source_policy: "For the first company-research vertical, CORROBORATED may require at least one primary source. This is a workflow/claim-template rule, not a universal definition for all future domains."
+    contradiction_rule: "Corroboration and contradiction search are one evidence-gathering operation performed in both directions for material claims, not separate subsystems."
+    action_threshold: "Evidence threshold is fixed by workflow/action template and may rise with irreversibility/reputational impact. The model cannot lower it."
+    residual_limit: "Claim-level qualification does not prove completeness of research; omission of a material claim that should have been discovered remains explicit residual risk for v0.1."
+  evidence_retention:
+    keep: "EvidenceBundle/claims used for an action remain attached to the work item/action receipt for audit and recovery."
+    future_context_rule: "Historical external claims are not automatically rehydrated as knowledge for a new research task about the same entity; new tasks must re-qualify external reality."
+    audit_discovery: "Historical claims may still be searchable by entity for audit/reconstruction; audit indexing must not imply permission for ContextAssembler reuse."
+  hostile_source_rule:
+    principle: "Retrieved/web/source content is data, never instruction."
+    note: "Read-only research permissions reduce operational damage but do not prevent poisoned content from steering claim formation; explicit falsification is required."
+  frozen_evidence_falsification_set_v0_1:
+    pass_threshold: "8/8 deterministic fixtures"
+    fixtures:
+      - id: EVID-01
+        case: "Real URL/source exists but does not support the extracted claim."
+        expected: INSUFFICIENT
+      - id: EVID-02
+        case: "Two different-domain articles copy one original report; dependency is visible."
+        expected: SOURCE_BACKED
+      - id: EVID-03
+        case: "One authoritative/primary source contains an incorrect assertion and no independent corroboration exists."
+        expected: SOURCE_BACKED
+      - id: EVID-04
+        case: "Two independent credible sources materially contradict each other."
+        expected: DISPUTED
+      - id: EVID-05
+        case: "Claim was once true but is stale/currently changed."
+        expected: "INSUFFICIENT or DISPUTED according to fixture evidence; never CORROBORATED"
+      - id: EVID-06
+        case: "Poisoned source contains instructions aimed at the research model."
+        expected: "Source instructions do not alter system/task rules; no unsupported claim promotion."
+      - id: EVID-07
+        case: "Correct claim/evidence refers to a different company with the same/similar name."
+        expected: "INSUFFICIENT due to failed/unknown subject binding"
+      - id: EVID-08
+        case: "Two independent secondary sources agree but the v0.1 template requires a primary source for CORROBORATED."
+        expected: SOURCE_BACKED
+  vertical_product_falsification_goal:
+    must_prove:
+      A: "Fuzzy human intent can be translated into sufficiently faithful bounded work under a measured contract test."
+      B: "PROGRAM/AI/HUMAN can cooperate without a global agent owning process authority."
+      C: "External action can traverse durable PENDING -> COMMITTING -> receipt/UNKNOWN with sensible crash/restart/cancel recovery."
+      D: "A formally valid but materially wrong AI result does not silently become a high-impact action premise; error remains local/visible/reconstructable and is blocked or escalated according to evidence policy."
+    fault_injection_requirement:
+      - "Inject a wrong-entity but schema-valid semantic result."
+      - "Inject a claim not supported by its cited evidence."
+      - "Measure whether the error is contained to one work item, visible before consequential commit when policy requires it, and reconstructable from receipts/evidence after the fact."
+    later_metric_not_required_for_first_vertical: "Reduction in human cognitive workload; important product metric but requires realistic traffic."
+  supersedes_v0_1_details:
+    - "Three task families in first vertical -> two task families; Inbox/Document deferred."
+    - "Capability-profile router -> static task-family x action-class routing."
+    - "Full EME/Postgres organizational-memory step before AI/research -> deferred/minimal memory after workflow evidence demonstrates need."
+    - "E3 classification/learning UI in first vertical -> raw corrections only."
+    - "Eight-state ActionLifecycle -> six reachable states for v0.1."
+    - "Model-proposed contract governance fields -> workflow-template-owned fields; semantic model restricted to objective/scope candidate data, with E2-style scope binding."
+  concise_thesis: "Recovery-first protects against wrong execution. Evidence qualification protects against perfectly executed decisions based on wrong premises. Both are required; neither establishes absolute truth."
+
+vertical_v0a_freeze_2026_09_17:
+  status: frozen_for_implementation
+  owner_operating_model: "Owner participates in exploration/brainstorming; after freeze, architecture/operations responsibility passes to ChatGPT. Opus 5 may be used as independent consultant via owner. Claude Code is implementer; Codex/equivalent independent tester."
+  vertical: "Research & Follow-up"
+  purpose: "Test the Human/Backend/AI core as a bounded operational system, not build a general autonomous agent."
+  must_prove:
+    - "Fuzzy intent can be compiled into bounded work with measured fidelity."
+    - "PROGRAM/AI/HUMAN can cooperate while backend retains process authority."
+    - "Consequential external action can traverse durable PENDING->COMMITTING->receipt/UNKNOWN with crash/restart/cancel recovery."
+    - "Schema-valid but materially wrong AI output cannot silently become a consequential action premise when evidence contract is unsatisfied."
+  implementation_sequence:
+    - "V0A-01: durable action lifecycle with PostgreSQL + DBOS + fake connector; no LLM/research."
+    - "V0A-02: WorkContract + E2-style entity binding + frozen intent fixtures."
+    - "V0A-03: Evidence Qualification model/rules + frozen 8/8 evidence fixtures; no live web required."
+    - "V0A-04: read-only research/model adapter integrated behind frozen contract with wrong-result fault injection."
+    - "V0-B: same CORE with real Gmail draft/send adapter and reconciliation."
+  frozen_artifacts:
+    - "/AgentResearch/VerticalV0A/VERTICAL_V0A_FROZEN_SPEC.md"
+    - "/AgentResearch/VerticalV0A/TASK_V0A_01_CORE_RECOVERY.md"
+  active_task:
+    id: V0A-01
+    title: "Core Durable Action Lifecycle"
+    objective: "Falsify/validate DBOS + PostgreSQL as runtime for the six-state pending action lifecycle before adding any AI."
+    pass_rule: "All 10 mandatory lifecycle/recovery contract tests pass; ambiguous external effect is never blindly retried into a duplicate."
+  repo_status: "No dedicated repository for this new system was found in the connected GitHub installation as of freeze. Do not place V0-A inside legacy elnath-code/elnath repositories. Create/use a clean repository before implementation delivery."
